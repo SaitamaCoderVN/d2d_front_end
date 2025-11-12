@@ -1,0 +1,256 @@
+/**
+ * Alternative implementation using Anchor Program client directly
+ * This is more reliable than manually building instructions
+ */
+
+import { AnchorProvider, Program, BN } from '@coral-xyz/anchor';
+import { Connection, PublicKey, SystemProgram } from '@solana/web3.js';
+import { WalletContextState } from '@solana/wallet-adapter-react';
+import rawIdl from '@/idl/d2d_program_sol.json';
+import type { D2dProgramSol } from '@/types/d2d_program_sol';
+
+const idlCandidate = rawIdl as { default?: any } | any;
+const resolvedIdl = ('default' in idlCandidate ? idlCandidate.default : idlCandidate);
+
+export const D2D_PROGRAM_ID = new PublicKey(resolvedIdl.address);
+export const TREASURY_POOL_SEED = Buffer.from('treasury_pool');
+export const LENDER_STAKE_SEED = Buffer.from('lender_stake');
+
+export const getTreasuryPoolPda = (): PublicKey => {
+  const [treasuryPool] = PublicKey.findProgramAddressSync([TREASURY_POOL_SEED], D2D_PROGRAM_ID);
+  return treasuryPool;
+};
+
+export const getBackerDepositPda = (backer: PublicKey): PublicKey => {
+  const [deposit] = PublicKey.findProgramAddressSync([
+    LENDER_STAKE_SEED,
+    backer.toBuffer(),
+  ], D2D_PROGRAM_ID);
+  return deposit;
+};
+
+/**
+ * Create Anchor provider from wallet
+ */
+export const createProvider = (
+  connection: Connection,
+  wallet: WalletContextState,
+): AnchorProvider => {
+  if (!wallet.publicKey || !wallet.signTransaction || !wallet.signAllTransactions) {
+    throw new Error('Wallet not connected or does not support required methods');
+  }
+
+  return new AnchorProvider(
+    connection,
+    {
+      publicKey: wallet.publicKey,
+      signTransaction: wallet.signTransaction,
+      signAllTransactions: wallet.signAllTransactions,
+    } as any,
+    { commitment: 'confirmed' },
+  );
+};
+
+/**
+ * Get Anchor program instance
+ */
+export const getProgram = (provider: AnchorProvider): Program<D2dProgramSol> => {
+  return new Program<D2dProgramSol>(resolvedIdl as any, provider);
+};
+
+/**
+ * Stake SOL using Anchor client
+ */
+export const stakeSolAnchor = async (
+  connection: Connection,
+  wallet: WalletContextState,
+  amountLamports: number,
+  lockPeriod: number,
+): Promise<string> => {
+  if (!wallet.publicKey) {
+    throw new Error('Wallet not connected');
+  }
+
+  const provider = createProvider(connection, wallet);
+  const program = getProgram(provider);
+
+  const treasuryPoolPda = getTreasuryPoolPda();
+  const lenderStakePda = getBackerDepositPda(wallet.publicKey);
+
+  console.log('[Anchor] Staking SOL:', {
+    amount: amountLamports / 1e9,
+    lockPeriod,
+    treasuryPool: treasuryPoolPda.toString(),
+    lenderStake: lenderStakePda.toString(),
+    lender: wallet.publicKey.toString(),
+  });
+
+  const tx = await program.methods
+    .stakeSol(new BN(amountLamports), new BN(lockPeriod))
+    .accountsPartial({
+      treasuryPool: treasuryPoolPda,
+      lenderStake: lenderStakePda,
+      lender: wallet.publicKey,
+      systemProgram: SystemProgram.programId,
+    })
+    .rpc();
+
+  console.log('[Anchor] Stake transaction:', tx);
+  return tx;
+};
+
+/**
+ * Claim rewards using Anchor client
+ */
+export const claimRewardsAnchor = async (
+  connection: Connection,
+  wallet: WalletContextState,
+): Promise<string> => {
+  if (!wallet.publicKey) {
+    throw new Error('Wallet not connected');
+  }
+
+  const provider = createProvider(connection, wallet);
+  const program = getProgram(provider);
+
+  const treasuryPoolPda = getTreasuryPoolPda();
+  const lenderStakePda = getBackerDepositPda(wallet.publicKey);
+
+  console.log('[Anchor] Claiming rewards:', {
+    treasuryPool: treasuryPoolPda.toString(),
+    lenderStake: lenderStakePda.toString(),
+    lender: wallet.publicKey.toString(),
+  });
+
+  // First, let's fetch the stake account to check rewards
+  try {
+    const stakeAccount = await program.account.backerDeposit.fetch(lenderStakePda);
+    console.log('[Anchor] Stake account data:', {
+      backer: stakeAccount.backer.toString(),
+      depositedAmount: stakeAccount.depositedAmount.toString(),
+      rewardDebt: stakeAccount.rewardDebt.toString(),
+      lastClaimTime: new Date(stakeAccount.lastClaimTime.toNumber() * 1000).toISOString(),
+      totalClaimed: stakeAccount.totalClaimed.toString(),
+      depositTime: new Date(stakeAccount.depositTime.toNumber() * 1000).toISOString(),
+      lockPeriod: stakeAccount.lockPeriod.toString(),
+      isActive: stakeAccount.isActive,
+      deploymentsSupported: stakeAccount.deploymentsSupported,
+    });
+  } catch (error) {
+    console.error('[Anchor] Failed to fetch stake account:', error);
+  }
+
+  // Build transaction for manual simulation
+  const transaction = await program.methods
+    .claimRewards()
+    .accountsPartial({
+      treasuryPool: treasuryPoolPda,
+      lenderStake: lenderStakePda,
+      lender: wallet.publicKey,
+      systemProgram: SystemProgram.programId,
+    })
+    .transaction();
+
+  // Get recent blockhash
+  const { blockhash } = await connection.getLatestBlockhash();
+  transaction.recentBlockhash = blockhash;
+  transaction.feePayer = wallet.publicKey;
+
+  // Simulate using RPC directly for better error details
+  try {
+    console.log('[Anchor] Simulating transaction via RPC...');
+    const simulation = await connection.simulateTransaction(transaction);
+    
+    console.log('[Anchor] RPC Simulation result:', simulation);
+    console.log('[Anchor] Simulation logs:', simulation.value.logs);
+    
+    if (simulation.value.err) {
+      console.error('[Anchor] Simulation error:', simulation.value.err);
+      
+      // Parse logs for specific error
+      const logs = simulation.value.logs || [];
+      const errorLog = logs.find(log => log.includes('Error:') || log.includes('failed:'));
+      
+      if (errorLog) {
+        console.error('[Anchor] Program error from logs:', errorLog);
+        throw new Error(errorLog);
+      }
+      
+      throw new Error(`Simulation failed: ${JSON.stringify(simulation.value.err)}`);
+    }
+    
+    console.log('[Anchor] Simulation successful!');
+  } catch (simError: any) {
+    console.error('[Anchor] Simulation failed:', simError);
+    throw simError;
+  }
+
+  // Execute transaction
+  const tx = await program.methods
+    .claimRewards()
+    .accountsPartial({
+      treasuryPool: treasuryPoolPda,
+      lenderStake: lenderStakePda,
+      lender: wallet.publicKey,
+      systemProgram: SystemProgram.programId,
+    })
+    .rpc();
+
+  console.log('[Anchor] Claim transaction:', tx);
+  return tx;
+};
+
+/**
+ * Fetch stake account data
+ */
+export const fetchStakeAccount = async (
+  connection: Connection,
+  wallet: WalletContextState,
+) => {
+  if (!wallet.publicKey) {
+    throw new Error('Wallet not connected');
+  }
+
+  const provider = createProvider(connection, wallet);
+  const program = getProgram(provider);
+  const lenderStakePda = getBackerDepositPda(wallet.publicKey);
+
+  try {
+    const stakeAccount = await program.account.backerDeposit.fetch(lenderStakePda);
+    return {
+      exists: true,
+      data: stakeAccount,
+    };
+  } catch (error) {
+    return {
+      exists: false,
+      error: error,
+    };
+  }
+};
+
+/**
+ * Fetch treasury pool data
+ */
+export const fetchTreasuryPool = async (
+  connection: Connection,
+  wallet: WalletContextState,
+) => {
+  const provider = createProvider(connection, wallet);
+  const program = getProgram(provider);
+  const treasuryPoolPda = getTreasuryPoolPda();
+
+  try {
+    const treasuryPool = await program.account.treasuryPool.fetch(treasuryPoolPda);
+    return {
+      exists: true,
+      data: treasuryPool,
+    };
+  } catch (error) {
+    return {
+      exists: false,
+      error: error,
+    };
+  }
+};
+

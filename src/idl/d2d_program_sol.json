@@ -1,0 +1,2416 @@
+{
+  "address": "Hn6enqRbfjQywqVbkNNFe6rauWjQLvea8Fyh6fZZPpA8",
+  "metadata": {
+    "name": "d2d_program_sol",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Created with Anchor"
+  },
+  "instructions": [
+    {
+      "name": "claim_rewards",
+      "docs": [
+        "Lender claim accumulated rewards"
+      ],
+      "discriminator": [
+        4,
+        144,
+        132,
+        71,
+        116,
+        23,
+        151,
+        80
+      ],
+      "accounts": [
+        {
+          "name": "treasury_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "lender_stake",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  110,
+                  100,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  107,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "lender"
+              }
+            ]
+          }
+        },
+        {
+          "name": "lender",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "close_program_and_refund",
+      "docs": [
+        "Admin close program and refund recovered lamports to pool"
+      ],
+      "discriminator": [
+        212,
+        54,
+        165,
+        48,
+        227,
+        66,
+        243,
+        44
+      ],
+      "accounts": [
+        {
+          "name": "treasury_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "deploy_request",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  112,
+                  108,
+                  111,
+                  121,
+                  95,
+                  114,
+                  101,
+                  113,
+                  117,
+                  101,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "request_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "refund_source",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "request_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "recovered_lamports",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "confirm_deployment_failure",
+      "docs": [
+        "Admin confirm deployment failure"
+      ],
+      "discriminator": [
+        166,
+        2,
+        135,
+        189,
+        160,
+        142,
+        133,
+        80
+      ],
+      "accounts": [
+        {
+          "name": "treasury_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "deploy_request",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  112,
+                  108,
+                  111,
+                  121,
+                  95,
+                  114,
+                  101,
+                  113,
+                  117,
+                  101,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "deploy_request.program_hash",
+                "account": "DeployRequest"
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "ephemeral_key",
+          "writable": true
+        },
+        {
+          "name": "developer_wallet",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "request_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "failure_reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "confirm_deployment_success",
+      "docs": [
+        "Admin confirm deployment success"
+      ],
+      "discriminator": [
+        22,
+        206,
+        187,
+        119,
+        214,
+        186,
+        236,
+        5
+      ],
+      "accounts": [
+        {
+          "name": "treasury_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "deploy_request",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  112,
+                  108,
+                  111,
+                  121,
+                  95,
+                  114,
+                  101,
+                  113,
+                  117,
+                  101,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "deploy_request.program_hash",
+                "account": "DeployRequest"
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "ephemeral_key",
+          "writable": true
+        },
+        {
+          "name": "developer_wallet",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "request_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "deployed_program_id",
+          "type": "pubkey"
+        },
+        {
+          "name": "recovered_funds",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "deploy_program",
+      "docs": [
+        "[DEPRECATED] Deploy program with both developer and admin signatures",
+        "Use request_deployment_funds + confirm_deployment_success instead"
+      ],
+      "discriminator": [
+        120,
+        79,
+        182,
+        165,
+        160,
+        10,
+        146,
+        229
+      ],
+      "accounts": [
+        {
+          "name": "treasury_pool",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "deploy_request",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  112,
+                  108,
+                  111,
+                  121,
+                  95,
+                  114,
+                  101,
+                  113,
+                  117,
+                  101,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "program_hash"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_stats",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "developer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "developer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "treasury_wallet",
+          "writable": true
+        },
+        {
+          "name": "ephemeral_key",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "program_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "service_fee",
+          "type": "u64"
+        },
+        {
+          "name": "monthly_fee",
+          "type": "u64"
+        },
+        {
+          "name": "initial_months",
+          "type": "u32"
+        },
+        {
+          "name": "deployment_cost",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "emergency_pause",
+      "docs": [
+        "Emergency pause/unpause"
+      ],
+      "discriminator": [
+        21,
+        143,
+        27,
+        142,
+        200,
+        181,
+        210,
+        255
+      ],
+      "accounts": [
+        {
+          "name": "treasury_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "pause",
+          "type": "bool"
+        }
+      ]
+    },
+    {
+      "name": "fund_temporary_wallet",
+      "docs": [
+        "Admin fund temporary wallet for deployment",
+        "Only backend admin can call this to transfer deployment funds"
+      ],
+      "discriminator": [
+        195,
+        217,
+        79,
+        3,
+        185,
+        190,
+        142,
+        89
+      ],
+      "accounts": [
+        {
+          "name": "treasury_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "deploy_request",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  112,
+                  108,
+                  111,
+                  121,
+                  95,
+                  114,
+                  101,
+                  113,
+                  117,
+                  101,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "request_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "temporary_wallet",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "request_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize",
+      "docs": [
+        "Initialize the D2D program and treasury pool"
+      ],
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "treasury_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "treasury_wallet"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "initial_apy",
+          "type": "u64"
+        },
+        {
+          "name": "treasury_wallet",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "pay_subscription",
+      "docs": [
+        "Developer pay monthly subscription"
+      ],
+      "discriminator": [
+        214,
+        139,
+        186,
+        253,
+        169,
+        248,
+        196,
+        11
+      ],
+      "accounts": [
+        {
+          "name": "treasury_pool",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "deploy_request",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  112,
+                  108,
+                  111,
+                  121,
+                  95,
+                  114,
+                  101,
+                  113,
+                  117,
+                  101,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "deploy_request.program_hash",
+                "account": "DeployRequest"
+              }
+            ]
+          }
+        },
+        {
+          "name": "developer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "treasury_wallet",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "request_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "months",
+          "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "request_deployment_funds",
+      "docs": [
+        "Request deployment funds from treasury pool",
+        "Backend will use these funds to deploy via pure Web3.js"
+      ],
+      "discriminator": [
+        246,
+        241,
+        136,
+        87,
+        141,
+        230,
+        129,
+        244
+      ],
+      "accounts": [
+        {
+          "name": "treasury_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "deploy_request",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  112,
+                  108,
+                  111,
+                  121,
+                  95,
+                  114,
+                  101,
+                  113,
+                  117,
+                  101,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "program_hash"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_stats",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "developer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "developer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "treasury_wallet"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "program_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "service_fee",
+          "type": "u64"
+        },
+        {
+          "name": "monthly_fee",
+          "type": "u64"
+        },
+        {
+          "name": "initial_months",
+          "type": "u32"
+        },
+        {
+          "name": "deployment_cost",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "stake_sol",
+      "docs": [
+        "Lender stake SOL into treasury pool",
+        "Kept for backward compatibility (use create_deposit for new code)"
+      ],
+      "discriminator": [
+        200,
+        38,
+        157,
+        155,
+        245,
+        57,
+        236,
+        168
+      ],
+      "accounts": [
+        {
+          "name": "treasury_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "lender_stake",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  110,
+                  100,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  107,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "lender"
+              }
+            ]
+          }
+        },
+        {
+          "name": "lender",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "lock_period",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "suspend_expired_programs",
+      "docs": [
+        "Admin suspend expired programs"
+      ],
+      "discriminator": [
+        29,
+        248,
+        88,
+        233,
+        133,
+        143,
+        246,
+        89
+      ],
+      "accounts": [
+        {
+          "name": "treasury_pool",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "unstake_sol",
+      "docs": [
+        "Lender unstake SOL from treasury pool",
+        "Kept for backward compatibility (use request_withdraw for new code)"
+      ],
+      "discriminator": [
+        70,
+        150,
+        140,
+        208,
+        166,
+        13,
+        252,
+        150
+      ],
+      "accounts": [
+        {
+          "name": "treasury_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "lender_stake",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  108,
+                  101,
+                  110,
+                  100,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  107,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "lender"
+              }
+            ]
+          }
+        },
+        {
+          "name": "lender",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "update_apy",
+      "docs": [
+        "Admin update APY"
+      ],
+      "discriminator": [
+        94,
+        110,
+        147,
+        45,
+        73,
+        167,
+        222,
+        77
+      ],
+      "accounts": [
+        {
+          "name": "treasury_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        }
+      ],
+      "args": [
+        {
+          "name": "new_apy",
+          "type": "u64"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "BackerDeposit",
+      "discriminator": [
+        233,
+        24,
+        109,
+        17,
+        7,
+        122,
+        24,
+        21
+      ]
+    },
+    {
+      "name": "DeployRequest",
+      "discriminator": [
+        47,
+        91,
+        87,
+        46,
+        78,
+        120,
+        21,
+        217
+      ]
+    },
+    {
+      "name": "TreasuryPool",
+      "discriminator": [
+        189,
+        10,
+        165,
+        70,
+        135,
+        51,
+        29,
+        117
+      ]
+    },
+    {
+      "name": "UserDeployStats",
+      "discriminator": [
+        96,
+        138,
+        250,
+        56,
+        106,
+        192,
+        193,
+        187
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "ApyUpdated",
+      "discriminator": [
+        128,
+        77,
+        231,
+        153,
+        96,
+        150,
+        84,
+        41
+      ]
+    },
+    {
+      "name": "DeployRequested",
+      "discriminator": [
+        236,
+        93,
+        153,
+        180,
+        211,
+        112,
+        67,
+        252
+      ]
+    },
+    {
+      "name": "DeploymentConfirmed",
+      "discriminator": [
+        254,
+        219,
+        210,
+        63,
+        255,
+        22,
+        17,
+        44
+      ]
+    },
+    {
+      "name": "DeploymentFailed",
+      "discriminator": [
+        139,
+        230,
+        42,
+        133,
+        244,
+        150,
+        132,
+        16
+      ]
+    },
+    {
+      "name": "DeploymentFundsRequested",
+      "discriminator": [
+        24,
+        127,
+        154,
+        179,
+        96,
+        54,
+        84,
+        34
+      ]
+    },
+    {
+      "name": "EmergencyPauseToggled",
+      "discriminator": [
+        68,
+        107,
+        204,
+        70,
+        158,
+        210,
+        37,
+        175
+      ]
+    },
+    {
+      "name": "ProgramClosed",
+      "discriminator": [
+        3,
+        105,
+        195,
+        187,
+        122,
+        1,
+        142,
+        8
+      ]
+    },
+    {
+      "name": "ProgramDeployed",
+      "discriminator": [
+        89,
+        227,
+        238,
+        191,
+        128,
+        7,
+        101,
+        15
+      ]
+    },
+    {
+      "name": "ProgramsSuspended",
+      "discriminator": [
+        235,
+        69,
+        57,
+        251,
+        27,
+        51,
+        147,
+        36
+      ]
+    },
+    {
+      "name": "RewardsClaimed",
+      "discriminator": [
+        75,
+        98,
+        88,
+        18,
+        219,
+        112,
+        88,
+        121
+      ]
+    },
+    {
+      "name": "RewardsDistributed",
+      "discriminator": [
+        11,
+        43,
+        154,
+        0,
+        229,
+        9,
+        116,
+        85
+      ]
+    },
+    {
+      "name": "SolStaked",
+      "discriminator": [
+        208,
+        251,
+        85,
+        47,
+        215,
+        38,
+        164,
+        77
+      ]
+    },
+    {
+      "name": "SolUnstaked",
+      "discriminator": [
+        200,
+        41,
+        161,
+        127,
+        15,
+        134,
+        21,
+        47
+      ]
+    },
+    {
+      "name": "SubscriptionPaid",
+      "discriminator": [
+        204,
+        65,
+        145,
+        54,
+        154,
+        163,
+        113,
+        229
+      ]
+    },
+    {
+      "name": "TemporaryWalletFunded",
+      "discriminator": [
+        3,
+        234,
+        196,
+        159,
+        194,
+        85,
+        44,
+        181
+      ]
+    },
+    {
+      "name": "TreasuryInitialized",
+      "discriminator": [
+        199,
+        73,
+        174,
+        205,
+        59,
+        145,
+        55,
+        179
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "ProgramPaused",
+      "msg": "Program is currently paused"
+    },
+    {
+      "code": 6001,
+      "name": "InsufficientDeposit",
+      "msg": "Insufficient deposit amount"
+    },
+    {
+      "code": 6002,
+      "name": "MaxConcurrentSessionsExceeded",
+      "msg": "Maximum concurrent sessions exceeded"
+    },
+    {
+      "code": 6003,
+      "name": "InvalidSessionStatus",
+      "msg": "Invalid session status for this operation"
+    },
+    {
+      "code": 6004,
+      "name": "MaxRetriesExceeded",
+      "msg": "Maximum retry attempts exceeded"
+    },
+    {
+      "code": 6005,
+      "name": "SessionNotExpired",
+      "msg": "Session has not expired yet"
+    },
+    {
+      "code": 6006,
+      "name": "Unauthorized",
+      "msg": "Unauthorized access"
+    },
+    {
+      "code": 6007,
+      "name": "InvalidAmount",
+      "msg": "Invalid amount"
+    },
+    {
+      "code": 6008,
+      "name": "InvalidLockPeriod",
+      "msg": "Invalid lock period"
+    },
+    {
+      "code": 6009,
+      "name": "InactiveStake",
+      "msg": "Inactive stake"
+    },
+    {
+      "code": 6010,
+      "name": "InsufficientStake",
+      "msg": "Insufficient stake amount"
+    },
+    {
+      "code": 6011,
+      "name": "StakeLocked",
+      "msg": "Stake is locked"
+    },
+    {
+      "code": 6012,
+      "name": "NoRewardsToClaim",
+      "msg": "No rewards to claim"
+    },
+    {
+      "code": 6013,
+      "name": "InsufficientTreasuryFunds",
+      "msg": "Insufficient treasury funds"
+    },
+    {
+      "code": 6014,
+      "name": "InvalidRequestId",
+      "msg": "Invalid request ID"
+    },
+    {
+      "code": 6015,
+      "name": "InvalidRequestStatus",
+      "msg": "Invalid request status"
+    },
+    {
+      "code": 6016,
+      "name": "InvalidDeploymentStatus",
+      "msg": "Invalid deployment status"
+    },
+    {
+      "code": 6017,
+      "name": "InvalidTreasuryWallet",
+      "msg": "Invalid treasury wallet"
+    },
+    {
+      "code": 6018,
+      "name": "InvalidEphemeralKey",
+      "msg": "Invalid ephemeral key"
+    },
+    {
+      "code": 6019,
+      "name": "CalculationOverflow",
+      "msg": "Calculation overflow"
+    },
+    {
+      "code": 6020,
+      "name": "TimeElapsedTooLarge",
+      "msg": "Time elapsed too large"
+    }
+  ],
+  "types": [
+    {
+      "name": "ApyUpdated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "old_apy",
+            "type": "u64"
+          },
+          {
+            "name": "new_apy",
+            "type": "u64"
+          },
+          {
+            "name": "updated_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "BackerDeposit",
+      "docs": [
+        "Backer's deposit position in the pool",
+        "Renamed from LenderStake for better clarity"
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "backer",
+            "type": "pubkey"
+          },
+          {
+            "name": "deposited_amount",
+            "type": "u64"
+          },
+          {
+            "name": "reward_debt",
+            "type": "u64"
+          },
+          {
+            "name": "last_claim_time",
+            "type": "i64"
+          },
+          {
+            "name": "total_claimed",
+            "type": "u64"
+          },
+          {
+            "name": "deposit_time",
+            "type": "i64"
+          },
+          {
+            "name": "lock_period",
+            "type": "i64"
+          },
+          {
+            "name": "is_active",
+            "type": "bool"
+          },
+          {
+            "name": "deployments_supported",
+            "type": "u32"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DeployRequest",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "request_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "developer",
+            "type": "pubkey"
+          },
+          {
+            "name": "program_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "service_fee",
+            "type": "u64"
+          },
+          {
+            "name": "monthly_fee",
+            "type": "u64"
+          },
+          {
+            "name": "deployment_cost",
+            "type": "u64"
+          },
+          {
+            "name": "subscription_paid_until",
+            "type": "i64"
+          },
+          {
+            "name": "ephemeral_key",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "deployed_program_id",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "DeployRequestStatus"
+              }
+            }
+          },
+          {
+            "name": "created_at",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DeployRequestStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "PendingDeployment"
+          },
+          {
+            "name": "Active"
+          },
+          {
+            "name": "SubscriptionExpired"
+          },
+          {
+            "name": "Suspended"
+          },
+          {
+            "name": "Failed"
+          },
+          {
+            "name": "Cancelled"
+          },
+          {
+            "name": "Closed"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DeployRequested",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "request_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "developer",
+            "type": "pubkey"
+          },
+          {
+            "name": "program_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "service_fee",
+            "type": "u64"
+          },
+          {
+            "name": "monthly_fee",
+            "type": "u64"
+          },
+          {
+            "name": "initial_months",
+            "type": "u32"
+          },
+          {
+            "name": "total_payment",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DeploymentConfirmed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "request_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "developer",
+            "type": "pubkey"
+          },
+          {
+            "name": "deployed_program_id",
+            "type": "pubkey"
+          },
+          {
+            "name": "deployment_cost",
+            "type": "u64"
+          },
+          {
+            "name": "recovered_funds",
+            "type": "u64"
+          },
+          {
+            "name": "confirmed_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DeploymentFailed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "request_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "developer",
+            "type": "pubkey"
+          },
+          {
+            "name": "failure_reason",
+            "type": "string"
+          },
+          {
+            "name": "refund_amount",
+            "type": "u64"
+          },
+          {
+            "name": "deployment_cost_returned",
+            "type": "u64"
+          },
+          {
+            "name": "failed_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DeploymentFundsRequested",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "request_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "developer",
+            "type": "pubkey"
+          },
+          {
+            "name": "program_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "service_fee",
+            "type": "u64"
+          },
+          {
+            "name": "monthly_fee",
+            "type": "u64"
+          },
+          {
+            "name": "initial_months",
+            "type": "u32"
+          },
+          {
+            "name": "deployment_cost",
+            "type": "u64"
+          },
+          {
+            "name": "total_payment",
+            "type": "u64"
+          },
+          {
+            "name": "requested_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "EmergencyPauseToggled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "paused",
+            "type": "bool"
+          },
+          {
+            "name": "toggled_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProgramClosed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "request_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "program_id",
+            "type": "pubkey"
+          },
+          {
+            "name": "developer",
+            "type": "pubkey"
+          },
+          {
+            "name": "recovered_lamports",
+            "type": "u64"
+          },
+          {
+            "name": "closed_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProgramDeployed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "request_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "developer",
+            "type": "pubkey"
+          },
+          {
+            "name": "program_hash",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "service_fee",
+            "type": "u64"
+          },
+          {
+            "name": "monthly_fee",
+            "type": "u64"
+          },
+          {
+            "name": "initial_months",
+            "type": "u32"
+          },
+          {
+            "name": "deployment_cost",
+            "type": "u64"
+          },
+          {
+            "name": "ephemeral_key",
+            "type": "pubkey"
+          },
+          {
+            "name": "total_payment",
+            "type": "u64"
+          },
+          {
+            "name": "deployed_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "ProgramsSuspended",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "suspended_count",
+            "type": "u32"
+          },
+          {
+            "name": "suspended_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RewardsClaimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lender",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "total_claimed",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RewardsDistributed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "total_fees_collected",
+            "type": "u64"
+          },
+          {
+            "name": "total_rewards_distributed",
+            "type": "u64"
+          },
+          {
+            "name": "current_apy",
+            "type": "u64"
+          },
+          {
+            "name": "distributed_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SolStaked",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lender",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "total_staked",
+            "type": "u64"
+          },
+          {
+            "name": "lock_period",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SolUnstaked",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "lender",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "remaining_staked",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "SubscriptionPaid",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "request_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "developer",
+            "type": "pubkey"
+          },
+          {
+            "name": "months",
+            "type": "u32"
+          },
+          {
+            "name": "payment_amount",
+            "type": "u64"
+          },
+          {
+            "name": "subscription_valid_until",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TemporaryWalletFunded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "request_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "temporary_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "funded_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TreasuryInitialized",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "treasury_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "initial_apy",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "TreasuryPool",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "total_staked",
+            "type": "u64"
+          },
+          {
+            "name": "total_rewards_distributed",
+            "type": "u64"
+          },
+          {
+            "name": "total_fees_collected",
+            "type": "u64"
+          },
+          {
+            "name": "current_apy",
+            "type": "u64"
+          },
+          {
+            "name": "last_distribution_time",
+            "type": "i64"
+          },
+          {
+            "name": "emergency_pause",
+            "type": "bool"
+          },
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "treasury_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "UserDeployStats",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "user",
+            "type": "pubkey"
+          },
+          {
+            "name": "active_sessions",
+            "type": "u32"
+          },
+          {
+            "name": "daily_deploys",
+            "type": "u32"
+          },
+          {
+            "name": "total_deploys",
+            "type": "u64"
+          },
+          {
+            "name": "last_reset",
+            "type": "i64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}
