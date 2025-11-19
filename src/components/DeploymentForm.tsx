@@ -15,7 +15,7 @@ import {
 import { CostBreakdown, AppConfig } from '@/types';
 import idl from '@/idl/d2d_program_sol.json';
 import type { D2dProgramSol } from '@/types/d2d_program_sol';
-import { getTreasuryPoolPda, getRewardPoolPda, D2D_PROGRAM_ID } from '@/lib/d2dProgram';
+import { getTreasuryPoolPda, getRewardPoolPda, getPlatformPoolPda, D2D_PROGRAM_ID } from '@/lib/d2dProgram';
 
 interface DeploymentFormProps {
   onDeploymentCreated: () => void;
@@ -277,13 +277,25 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
       console.log('📋 Step 1: Creating payment transaction...');
       toast.loading('Creating payment transaction...', { id: 'payment' });
 
-      const paymentAmount = costBreakdown.totalPayment;
-      // Payment should go to Reward Pool PDA (not Treasury Pool PDA)
-      // According to the flow: developer pays fees (1% reward, 0.1% platform) to Reward Pool
+      // Calculate fee breakdown:
+      // - monthlyFee (1% of borrowed amount monthly) → RewardPool
+      // - platformFee (0.1% of borrowed amount monthly) → PlatformPool
+      // - serviceFee + deploymentPlatformFee → part of total payment
+      const monthlyFeeAmount = costBreakdown.monthlyFee * costBreakdown.initialMonths;
+      // Platform fee = 0.1% of monthly fee (or calculate separately based on borrowed amount)
+      // For now, use deploymentPlatformFee as platform fee
+      const platformFeeAmount = costBreakdown.deploymentPlatformFee;
+      const rewardFeeAmount = monthlyFeeAmount; // 1% monthly fee goes to RewardPool
+      const remainingPayment = costBreakdown.serviceFee; // Service fee also goes to RewardPool
+      const totalRewardPoolPayment = rewardFeeAmount + remainingPayment;
+      
       const rewardPoolAddress = getRewardPoolPda();
+      const platformPoolAddress = getPlatformPoolPda();
 
-      console.log('   Payment amount:', (paymentAmount / LAMPORTS_PER_SOL).toFixed(4), 'SOL');
-      console.log('   Reward Pool PDA:', rewardPoolAddress.toString());
+      console.log('   Payment breakdown:');
+      console.log('   - Reward Pool (monthly fee + service fee):', (totalRewardPoolPayment / LAMPORTS_PER_SOL).toFixed(4), 'SOL');
+      console.log('   - Platform Pool (platform fee):', (platformFeeAmount / LAMPORTS_PER_SOL).toFixed(4), 'SOL');
+      console.log('   - Total:', (costBreakdown.totalPayment / LAMPORTS_PER_SOL).toFixed(4), 'SOL');
 
       const treasurySnapshot = await fetchTreasuryPoolSnapshot();
       if (treasurySnapshot) {
@@ -295,13 +307,24 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
         });
       }
 
-      const transaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: publicKey,
-          toPubkey: rewardPoolAddress, // Send to Reward Pool PDA (receives developer fees)
-          lamports: paymentAmount,
-        })
-      );
+      // Create transaction with 2 transfers:
+      // 1. Reward Pool: monthlyFee + serviceFee
+      // 2. Platform Pool: platformFee
+      const transaction = new Transaction()
+        .add(
+          SystemProgram.transfer({
+            fromPubkey: publicKey,
+            toPubkey: rewardPoolAddress, // Monthly fee (1%) + service fee → RewardPool
+            lamports: totalRewardPoolPayment,
+          })
+        )
+        .add(
+          SystemProgram.transfer({
+            fromPubkey: publicKey,
+            toPubkey: platformPoolAddress, // Platform fee (0.1%) → PlatformPool
+            lamports: platformFeeAmount,
+          })
+        );
 
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
       transaction.recentBlockhash = blockhash;
