@@ -65,7 +65,7 @@ export default function DeploymentHistory({
             <div>
               <div className="font-semibold mb-1">🎉 Deployment Complete!</div>
               <div className="text-sm">
-                Program deployed to mainnet successfully!
+                Program deployed to devnet successfully!
               </div>
             </div>,
             { duration: 6000 },
@@ -246,7 +246,7 @@ export default function DeploymentHistory({
                             },
                             { 
                               status: deployment.status === DeploymentStatus.DEPLOYING ? 'active' : 'pending',
-                              label: 'Deploying to mainnet',
+                              label: 'Deploying to devnet',
                               icon: deployment.status === DeploymentStatus.DEPLOYING ? '⏳' : '🚀'
                             }
                           ].map((step, idx) => (
@@ -307,7 +307,7 @@ export default function DeploymentHistory({
                   <div className="mt-4 flex flex-wrap gap-3 pt-4 border-t border-gray-200">
                     {(deployment.paymentSignature || deployment.payment_signature) && (
                       <a
-                        href={`https://explorer.solana.com/tx/${deployment.paymentSignature || deployment.payment_signature}?cluster=mainnet`}
+                        href={`https://explorer.solana.com/tx/${deployment.paymentSignature || deployment.payment_signature}?cluster=devnet`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center space-x-2 text-sm text-[#0066FF] hover:text-[#0052CC] font-medium"
@@ -320,7 +320,7 @@ export default function DeploymentHistory({
                     )}
                     {deployment.on_chain_deploy_tx && (
                       <a
-                        href={`https://explorer.solana.com/tx/${deployment.on_chain_deploy_tx}?cluster=mainnet`}
+                        href={`https://explorer.solana.com/tx/${deployment.on_chain_deploy_tx}?cluster=devnet`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center space-x-2 text-sm text-[#0066FF] hover:text-[#0052CC] font-medium"
@@ -333,7 +333,7 @@ export default function DeploymentHistory({
                     )}
                     {(deployment.transactionSignature || deployment.transaction_signature) && (
                       <a
-                        href={`https://explorer.solana.com/tx/${deployment.transactionSignature || deployment.transaction_signature}?cluster=mainnet`}
+                        href={`https://explorer.solana.com/tx/${deployment.transactionSignature || deployment.transaction_signature}?cluster=devnet`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center space-x-2 text-sm text-[#0066FF] hover:text-[#0052CC] font-medium"
@@ -346,7 +346,7 @@ export default function DeploymentHistory({
                     )}
                     {deployment.on_chain_confirm_tx && (
                       <a
-                        href={`https://explorer.solana.com/tx/${deployment.on_chain_confirm_tx}?cluster=mainnet`}
+                        href={`https://explorer.solana.com/tx/${deployment.on_chain_confirm_tx}?cluster=devnet`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center space-x-2 text-[#0066FF] hover:text-[#0052CC] font-medium"

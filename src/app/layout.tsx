@@ -8,7 +8,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'D2D - Decentralize Deployment',
-  description: 'Deploy your Solana programs from Devnet to Mainnet with ease',
+  description: 'Deploy your Solana programs to Devnet with ease',
   icons: {
     icon: '/favicon.svg',
   },

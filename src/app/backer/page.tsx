@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@/components/WalletButton';
 import Link from 'next/link';
@@ -21,7 +21,8 @@ import {
   checkStakeAccountExists,
 } from '@/lib/d2dProgram';
 import { debugClaimRewards } from '@/lib/debugUtils';
-import { claimRewardsAnchor } from '@/lib/d2dProgramAnchor';
+import { claimRewardsAnchor, stakeSolAnchor } from '@/lib/d2dProgramAnchor';
+import { fetchBackerDataOnChain, OnChainBackerData } from '@/lib/backerOnChain';
 
 export default function BackerPage() {
   const wallet = useWallet();
@@ -31,78 +32,62 @@ export default function BackerPage() {
   const [stakeAmount, setStakeAmount] = useState('');
   const [isStaking, setIsStaking] = useState(false);
   const [isClaiming, setIsClaiming] = useState(false);
-  const [userStake, setUserStake] = useState(0);
-  const [totalStaked, setTotalStaked] = useState(32);
-  const [programsDeployed, setProgramsDeployed] = useState(13);
-  const [userRewards, setUserRewards] = useState(0);
-  const [daysStaked, setDaysStaked] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [onChainData, setOnChainData] = useState<OnChainBackerData | null>(null);
   
   // Constants
-  const PROFIT_PER_PROGRAM_MONTHLY = 5;
   const SOL_PRICE = 200;
   
-  // Load from localStorage on mount
-  useEffect(() => {
-    if (publicKey) {
-      const data = getBackerData(publicKey.toString());
-      if (data) {
-        setUserStake(data.userStake);
-        setTotalStaked(data.totalPoolStaked);
-        setProgramsDeployed(data.programsDeployed);
-        
-        // Calculate days staked
-        const days = Math.floor((Date.now() - data.stakeTimestamp) / (1000 * 60 * 60 * 24));
-        setDaysStaked(days);
-        
-        // Calculate rewards based on programs deployed AFTER staking
-        const rewards = calculateUserRewards(
-          data.userStake,
-          data.totalPoolStaked,
-          data.programsDeployed,
-          data.programsDeployedAtStake ?? data.programsDeployed, // Fallback for old data
-          PROFIT_PER_PROGRAM_MONTHLY,
-          SOL_PRICE
-        );
-        setUserRewards(rewards);
-      }
+  // Ref to track if we're currently fetching to prevent duplicate calls
+  const isFetchingRef = useRef(false);
+  
+  // Fetch data from on-chain with debounce and duplicate prevention
+  const refreshOnChainData = useCallback(async () => {
+    if (!publicKey || !connected) {
+      setIsLoading(false);
+      return;
     }
-  }, [publicKey]);
-  
-  // Refresh programs deployed from localStorage every 5 seconds
+
+    // Prevent duplicate concurrent fetches
+    if (isFetchingRef.current) {
+      return;
+    }
+
+    try {
+      isFetchingRef.current = true;
+      setIsLoading(true);
+      const data = await fetchBackerDataOnChain(connection, wallet);
+      setOnChainData(data);
+    } catch (error) {
+      console.error('Error fetching on-chain data:', error);
+    } finally {
+      setIsLoading(false);
+      isFetchingRef.current = false;
+    }
+  }, [publicKey, connected, connection, wallet]);
+
+  // Load from on-chain on mount and when wallet changes (with debounce)
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (publicKey) {
-        const data = getBackerData(publicKey.toString());
-        if (data && data.programsDeployed !== programsDeployed) {
-          setProgramsDeployed(data.programsDeployed);
-          
-          // Recalculate rewards based on NEW programs since stake
-          const days = Math.floor((Date.now() - data.stakeTimestamp) / (1000 * 60 * 60 * 24));
-          setDaysStaked(days);
-          const rewards = calculateUserRewards(
-            data.userStake,
-            data.totalPoolStaked,
-            data.programsDeployed,
-            data.programsDeployedAtStake ?? data.programsDeployed, // Fallback for old data
-            PROFIT_PER_PROGRAM_MONTHLY,
-            SOL_PRICE
-          );
-          setUserRewards(rewards);
-        }
-      }
-    }, 5000);
+    // Debounce: wait 300ms before fetching to avoid rapid re-renders
+    const timeoutId = setTimeout(() => {
+      refreshOnChainData();
+    }, 300);
     
-    return () => clearInterval(interval);
-  }, [publicKey, programsDeployed]);
+    return () => clearTimeout(timeoutId);
+  }, [publicKey, connected, refreshOnChainData]);
+
+  // Extract values from on-chain data
+  const userStake = onChainData?.userStake ?? 0;
+  const totalStaked = onChainData?.totalStaked ?? 0;
+  const userRewards = onChainData?.userRewards ?? 0;
+  const daysStaked = onChainData?.daysStaked ?? 0;
+  const currentApy = onChainData?.currentApy ?? 0;
+  const availableRewards = onChainData?.availableRewards ?? 0;
+  const deploymentsSupported = onChainData?.deploymentsSupported ?? 0;
   
-  const SOL_LOCKED = programsDeployed * 1.2; // programs × 1.2 SOL each
-  
-  const estimatedAPY = calculateAPY(
-    totalStaked,
-    programsDeployed,
-    PROFIT_PER_PROGRAM_MONTHLY,
-    SOL_PRICE
-  );
+  // Calculate SOL locked (approximation based on deployment cost)
+  // This should ideally be calculated from active deployments
+  const SOL_LOCKED = totalStaked - availableRewards; // Rough estimate
 
   const handleStake = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -127,42 +112,39 @@ export default function BackerPage() {
     try {
       toast.loading('Preparing stake transaction...', { id: 'stake' });
 
+      // Check wallet balance before staking
+      const balance = await connection.getBalance(publicKey);
+      const balanceSOL = balance / LAMPORTS_PER_SOL;
+      console.log(`[Stake] Wallet balance: ${balanceSOL.toFixed(4)} SOL (${balance} lamports)`);
+      
+      // Estimate required balance: deposit + rent exemption (~1.4M) + transaction fee (~10k)
+      const RENT_EXEMPTION_ESTIMATE = 1_400_000; // ~1.4M lamports for new account
+      const TRANSACTION_FEE_ESTIMATE = 10_000;
       const amountLamports = Math.floor(amount * LAMPORTS_PER_SOL);
+      const estimatedRequired = amountLamports + RENT_EXEMPTION_ESTIMATE + TRANSACTION_FEE_ESTIMATE;
+      
+      console.log(`[Stake] Deposit amount: ${amount} SOL (${amountLamports} lamports)`);
+      console.log(`[Stake] Estimated required: ${(estimatedRequired / LAMPORTS_PER_SOL).toFixed(4)} SOL (${estimatedRequired} lamports)`);
+      
+      if (balance < estimatedRequired) {
+        const needed = (estimatedRequired - balance) / LAMPORTS_PER_SOL;
+        toast.error(`Insufficient balance. Need ${(estimatedRequired / LAMPORTS_PER_SOL).toFixed(4)} SOL, have ${balanceSOL.toFixed(4)} SOL. Missing: ${needed.toFixed(4)} SOL`, { id: 'stake' });
+        return;
+      }
 
-      const instruction = createStakeSolInstruction(amountLamports, 0, publicKey);
-      const transaction = await prepareTransaction(connection, publicKey, instruction);
-
+      // Use Anchor client for better error handling
       toast.loading('Please approve stake transaction...', { id: 'stake' });
-      const signature = await sendTransaction(transaction, connection);
+      const signature = await stakeSolAnchor(connection, wallet, amountLamports, 0);
 
       toast.loading('Confirming transaction...', { id: 'stake' });
       await connection.confirmTransaction(signature, 'confirmed');
 
       toast.success(`✅ Successfully staked ${amount} SOL!`, { id: 'stake', duration: 5000 });
 
-      // Update state
-      const newUserStake = userStake + amount;
-      const newTotalStaked = totalStaked + amount;
-      setUserStake(newUserStake);
-      setTotalStaked(newTotalStaked);
       setStakeAmount('');
       
-      // Save to localStorage
-      if (publicKey) {
-        updateUserStake(amount, publicKey.toString(), programsDeployed);
-        
-        // Recalculate rewards (will be 0 since no new programs deployed yet)
-        const rewards = calculateUserRewards(
-          newUserStake,
-          newTotalStaked,
-          programsDeployed,
-          programsDeployed, // Same as current, so 0 new programs
-          PROFIT_PER_PROGRAM_MONTHLY,
-          SOL_PRICE
-        );
-        setUserRewards(rewards);
-        setDaysStaked(0);
-      }
+      // Refresh on-chain data
+      await refreshOnChainData();
 
       setTimeout(() => {
         toast.success(
@@ -194,7 +176,7 @@ export default function BackerPage() {
 
   const calculateEstimatedRewards = () => {
     if (!stakeAmount || isNaN(parseFloat(stakeAmount))) return 0;
-    return (parseFloat(stakeAmount) * estimatedAPY) / 100;
+    return (parseFloat(stakeAmount) * currentApy) / 100;
   };
 
   const handleDebug = async () => {
@@ -212,8 +194,13 @@ export default function BackerPage() {
       return;
     }
 
-    if (userRewards === 0) {
-      toast.error('No rewards to claim');
+    if (!onChainData || userRewards <= 0) {
+      toast.error('No rewards to claim. Please wait for rewards to accumulate.');
+      return;
+    }
+    
+    if (!onChainData.isActive) {
+      toast.error('Your stake is inactive. Please stake SOL first.');
       return;
     }
 
@@ -240,9 +227,8 @@ export default function BackerPage() {
 
       const claimedAmount = userRewards;
 
-      // Update local storage & state
-      claimRewards(publicKey.toString());
-      setUserRewards(0);
+      // Refresh on-chain data to get updated rewards
+      await refreshOnChainData();
 
       toast.success(`✅ Claimed ${claimedAmount.toFixed(4)} SOL!`, { id: 'claim', duration: 5000 });
 
@@ -300,33 +286,33 @@ export default function BackerPage() {
   const stats = [
     {
       label: 'Your Stake',
-      value: `${userStake.toFixed(2)} SOL`,
-      subtitle: `≈ $${(userStake * SOL_PRICE).toFixed(2)}`
+      value: isLoading ? 'Loading...' : `${userStake.toFixed(2)} SOL`,
+      subtitle: isLoading ? '' : `≈ $${(userStake * SOL_PRICE).toFixed(2)}`
     },
     {
       label: 'APY',
-      value: `${estimatedAPY}%`,
-      subtitle: `Based on $${programsDeployed * PROFIT_PER_PROGRAM_MONTHLY}/mo`
+      value: isLoading ? 'Loading...' : `${currentApy.toFixed(2)}%`,
+      subtitle: isLoading ? '' : `Current on-chain APY`
     },
     {
       label: 'Rewards Earned',
-      value: `${userRewards.toFixed(4)} SOL`,
-      subtitle: userRewards > 0 ? `≈ $${(userRewards * SOL_PRICE).toFixed(2)}` : 'Stake to earn rewards'
+      value: isLoading ? 'Loading...' : `${userRewards.toFixed(4)} SOL`,
+      subtitle: isLoading ? '' : (userRewards > 0 ? `≈ $${(userRewards * SOL_PRICE).toFixed(2)}` : 'Stake to earn rewards')
     },
     {
       label: 'Total Pool',
-      value: `${totalStaked.toFixed(2)} SOL`,
-      subtitle: 'TVL in treasury'
+      value: isLoading ? 'Loading...' : `${totalStaked.toFixed(2)} SOL`,
+      subtitle: isLoading ? '' : 'TVL in treasury'
     },
     {
-      label: 'SOL Locked',
-      value: `${SOL_LOCKED.toFixed(2)} SOL`,
-      subtitle: 'For rent coverage'
+      label: 'Available Rewards',
+      value: isLoading ? 'Loading...' : `${availableRewards.toFixed(2)} SOL`,
+      subtitle: isLoading ? '' : 'Fees collected - rewards distributed'
     },
     {
-      label: 'Programs Deployed',
-      value: programsDeployed.toString(),
-      subtitle: 'Total deployed'
+      label: 'Deployments Supported',
+      value: isLoading ? 'Loading...' : deploymentsSupported.toString(),
+      subtitle: isLoading ? '' : 'Your stake helped fund'
     }
   ];
 
@@ -457,7 +443,7 @@ export default function BackerPage() {
               <div className="mb-8">
                 <h2 className="section-header">Become a Backer & Earn Rewards</h2>
                 <p className="section-subtitle">
-                  Stake your SOL to support program deployments and earn {estimatedAPY}% APY
+                  Stake your SOL to support program deployments and earn {isLoading ? '...' : `${currentApy.toFixed(2)}`}% APY
                 </p>
               </div>
 
@@ -506,7 +492,7 @@ export default function BackerPage() {
                     <div className="pt-3 border-t border-blue-200">
                       <div className="flex justify-between items-center">
                         <span className="text-sm text-gray-700">APY:</span>
-                        <span className="font-bold text-[#0066FF] text-xl">{estimatedAPY}%</span>
+                        <span className="font-bold text-[#0066FF] text-xl">{isLoading ? '...' : `${currentApy.toFixed(2)}%`}</span>
                       </div>
                     </div>
                   </div>
@@ -537,7 +523,7 @@ export default function BackerPage() {
                   {[
                     { num: '1', text: 'Stake your SOL to the treasury pool' },
                     { num: '2', text: 'Your SOL is used to cover rent for developer deployments' },
-                    { num: '3', text: `Earn ${estimatedAPY}% APY as developers pay service fees` },
+                    { num: '3', text: `Earn ${isLoading ? '...' : `${currentApy.toFixed(2)}`}% APY as developers pay service fees` },
                     { num: '4', text: 'Unstake anytime with a 7-day cooldown period' }
                   ].map((step, index) => (
                     <div key={index} className="flex items-start space-x-3">

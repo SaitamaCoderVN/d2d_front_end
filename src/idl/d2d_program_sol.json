@@ -8,6 +8,99 @@
   },
   "instructions": [
     {
+      "name": "admin_withdraw",
+      "docs": [
+        "Admin withdraw funds from Admin Pool"
+      ],
+      "discriminator": [
+        160,
+        166,
+        147,
+        222,
+        46,
+        220,
+        75,
+        224
+      ],
+      "accounts": [
+        {
+          "name": "treasury_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "destination",
+          "writable": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        },
+        {
+          "name": "reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
       "name": "claim_rewards",
       "docs": [
         "Lender claim accumulated rewards"
@@ -39,6 +132,30 @@
                   117,
                   114,
                   121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reward_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  119,
+                  97,
+                  114,
+                  100,
                   95,
                   112,
                   111,
@@ -194,6 +311,72 @@
       ]
     },
     {
+      "name": "close_treasury_pool",
+      "docs": [
+        "Close Treasury Pool account (Admin only)",
+        "",
+        "This closes the treasury pool account and transfers all lamports to admin.",
+        "Does NOT require deserializing the account, so it works with old struct layouts.",
+        "",
+        "After closing, call reinitialize_treasury_pool() to create a new account with the updated layout."
+      ],
+      "discriminator": [
+        74,
+        23,
+        235,
+        188,
+        143,
+        125,
+        223,
+        245
+      ],
+      "accounts": [
+        {
+          "name": "treasury_pool",
+          "docs": [
+            "We use UncheckedAccount to avoid deserialization (works with old layouts)",
+            "PDA seeds are verified by Anchor constraint, so it's safe to use UncheckedAccount"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "docs": [
+            "Admin who will receive the lamports"
+          ],
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "confirm_deployment_failure",
       "docs": [
         "Admin confirm deployment failure"
@@ -279,6 +462,59 @@
         {
           "name": "developer_wallet",
           "writable": true
+        },
+        {
+          "name": "admin_pool",
+          "docs": [
+            "Note: ADMIN_POOL_SEED maps to platform_pool for backward compatibility"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reward_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  119,
+                  97,
+                  114,
+                  100,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
         },
         {
           "name": "system_program",
@@ -389,6 +625,59 @@
           "writable": true
         },
         {
+          "name": "admin_pool",
+          "docs": [
+            "Note: ADMIN_POOL_SEED maps to platform_pool for backward compatibility"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reward_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  119,
+                  97,
+                  114,
+                  100,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
           "name": "system_program",
           "address": "11111111111111111111111111111111"
         }
@@ -409,6 +698,291 @@
         },
         {
           "name": "recovered_funds",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "create_deploy_request",
+      "docs": [
+        "Admin create deploy request after payment verification",
+        "Only backend admin can call this after verifying developer payment",
+        "Payment has already been transferred to Reward Pool"
+      ],
+      "discriminator": [
+        249,
+        143,
+        63,
+        75,
+        67,
+        107,
+        0,
+        146
+      ],
+      "accounts": [
+        {
+          "name": "treasury_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reward_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  119,
+                  97,
+                  114,
+                  100,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "deploy_request",
+          "docs": [
+            "We use UncheckedAccount to handle old layouts, then manually deserialize/resize"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  101,
+                  112,
+                  108,
+                  111,
+                  121,
+                  95,
+                  114,
+                  101,
+                  113,
+                  117,
+                  101,
+                  115,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "program_hash"
+              }
+            ]
+          }
+        },
+        {
+          "name": "user_stats",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  117,
+                  115,
+                  101,
+                  114,
+                  95,
+                  115,
+                  116,
+                  97,
+                  116,
+                  115
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "developer"
+              }
+            ]
+          }
+        },
+        {
+          "name": "developer",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "program_hash",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "service_fee",
+          "type": "u64"
+        },
+        {
+          "name": "monthly_fee",
+          "type": "u64"
+        },
+        {
+          "name": "initial_months",
+          "type": "u32"
+        },
+        {
+          "name": "deployment_cost",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "credit_fee_to_pool",
+      "docs": [
+        "Credit fees to pools and update reward_per_share",
+        "Admin/backend only - called when devs pay fees"
+      ],
+      "discriminator": [
+        168,
+        40,
+        70,
+        186,
+        61,
+        14,
+        167,
+        178
+      ],
+      "accounts": [
+        {
+          "name": "treasury_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reward_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  119,
+                  97,
+                  114,
+                  100,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "platform_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "fee_reward",
+          "type": "u64"
+        },
+        {
+          "name": "fee_platform",
           "type": "u64"
         }
       ]
@@ -623,7 +1197,8 @@
       "name": "fund_temporary_wallet",
       "docs": [
         "Admin fund temporary wallet for deployment",
-        "Only backend admin can call this to transfer deployment funds"
+        "Only backend admin can call this to transfer deployment funds",
+        "use_admin_pool: true = use Admin Pool, false = use Reward Pool (preferred)"
       ],
       "discriminator": [
         195,
@@ -699,6 +1274,32 @@
           "signer": true
         },
         {
+          "name": "treasury_pda",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
           "name": "temporary_wallet",
           "writable": true
         }
@@ -716,6 +1317,10 @@
         {
           "name": "amount",
           "type": "u64"
+        },
+        {
+          "name": "use_admin_pool",
+          "type": "bool"
         }
       ]
     },
@@ -762,12 +1367,62 @@
           }
         },
         {
+          "name": "reward_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  119,
+                  97,
+                  114,
+                  100,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "platform_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
           "name": "admin",
           "writable": true,
           "signer": true
         },
         {
-          "name": "treasury_wallet"
+          "name": "dev_wallet"
         },
         {
           "name": "system_program",
@@ -780,7 +1435,7 @@
           "type": "u64"
         },
         {
-          "name": "treasury_wallet",
+          "name": "dev_wallet",
           "type": "pubkey"
         }
       ]
@@ -885,6 +1540,130 @@
         {
           "name": "months",
           "type": "u32"
+        }
+      ]
+    },
+    {
+      "name": "reinitialize_treasury_pool",
+      "docs": [
+        "Reinitialize Treasury Pool (Admin only)",
+        "",
+        "This reinitializes an existing treasury pool account with new struct layout.",
+        "Works even if the account has old layout or is rent-exempt.",
+        "",
+        "Use this after closing the old account to migrate to new layout."
+      ],
+      "discriminator": [
+        119,
+        63,
+        199,
+        102,
+        0,
+        102,
+        85,
+        113
+      ],
+      "accounts": [
+        {
+          "name": "treasury_pool",
+          "docs": [
+            "We use UncheckedAccount to avoid deserialization, then manually resize and initialize"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "reward_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  114,
+                  101,
+                  119,
+                  97,
+                  114,
+                  100,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "platform_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  108,
+                  97,
+                  116,
+                  102,
+                  111,
+                  114,
+                  109,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "dev_wallet"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "initial_apy",
+          "type": "u64"
+        },
+        {
+          "name": "dev_wallet",
+          "type": "pubkey"
         }
       ]
     },
@@ -1079,6 +1858,32 @@
           }
         },
         {
+          "name": "treasury_pda",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
           "name": "lender_stake",
           "writable": true,
           "pda": {
@@ -1196,6 +2001,32 @@
       "accounts": [
         {
           "name": "treasury_pool",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "treasury_pda",
           "writable": true,
           "pda": {
             "seeds": [
@@ -1378,6 +2209,32 @@
   ],
   "events": [
     {
+      "name": "AdminMovedToRewardPool",
+      "discriminator": [
+        57,
+        140,
+        253,
+        235,
+        44,
+        7,
+        54,
+        26
+      ]
+    },
+    {
+      "name": "AdminWithdrew",
+      "discriminator": [
+        128,
+        19,
+        176,
+        57,
+        89,
+        78,
+        139,
+        246
+      ]
+    },
+    {
       "name": "ApyUpdated",
       "discriminator": [
         128,
@@ -1388,6 +2245,19 @@
         150,
         84,
         41
+      ]
+    },
+    {
+      "name": "Claimed",
+      "discriminator": [
+        217,
+        192,
+        123,
+        72,
+        108,
+        150,
+        248,
+        33
       ]
     },
     {
@@ -1443,6 +2313,19 @@
       ]
     },
     {
+      "name": "DepositMade",
+      "discriminator": [
+        210,
+        201,
+        130,
+        183,
+        244,
+        203,
+        155,
+        199
+      ]
+    },
+    {
       "name": "EmergencyPauseToggled",
       "discriminator": [
         68,
@@ -1492,6 +2375,19 @@
         51,
         147,
         36
+      ]
+    },
+    {
+      "name": "RewardCredited",
+      "discriminator": [
+        21,
+        16,
+        94,
+        56,
+        44,
+        11,
+        160,
+        202
       ]
     },
     {
@@ -1583,6 +2479,19 @@
         145,
         55,
         179
+      ]
+    },
+    {
+      "name": "WithdrawRequested",
+      "discriminator": [
+        114,
+        16,
+        240,
+        206,
+        93,
+        128,
+        151,
+        39
       ]
     }
   ],
@@ -1691,9 +2600,97 @@
       "code": 6020,
       "name": "TimeElapsedTooLarge",
       "msg": "Time elapsed too large"
+    },
+    {
+      "code": 6021,
+      "name": "NegativeTimeElapsed",
+      "msg": "Negative time elapsed - clock error detected"
+    },
+    {
+      "code": 6022,
+      "name": "InvalidRecoveredFunds",
+      "msg": "Recovered funds exceed deployment cost"
+    },
+    {
+      "code": 6023,
+      "name": "LockPeriodTooLong",
+      "msg": "Lock period exceeds maximum allowed (10 years)"
+    },
+    {
+      "code": 6024,
+      "name": "InsufficientPrincipalFunds",
+      "msg": "Insufficient principal funds in treasury pool"
+    },
+    {
+      "code": 6025,
+      "name": "FeeAmountTooLarge",
+      "msg": "Fee amount exceeds maximum allowed"
+    },
+    {
+      "code": 6026,
+      "name": "InsufficientLiquidBalance",
+      "msg": "Insufficient liquid balance for withdrawal"
+    },
+    {
+      "code": 6027,
+      "name": "DivisionByZero",
+      "msg": "Division by zero - total deposits is zero"
+    },
+    {
+      "code": 6028,
+      "name": "InvalidWithdrawalRequest",
+      "msg": "Invalid withdrawal request"
     }
   ],
   "types": [
+    {
+      "name": "AdminMovedToRewardPool",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "moved_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "AdminWithdrew",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "destination",
+            "type": "pubkey"
+          },
+          {
+            "name": "reason",
+            "type": "string"
+          },
+          {
+            "name": "withdrawn_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
     {
       "name": "ApyUpdated",
       "type": {
@@ -1718,7 +2715,11 @@
       "name": "BackerDeposit",
       "docs": [
         "Backer's deposit position in the pool",
-        "Renamed from LenderStake for better clarity"
+        "",
+        "Reward-per-share model:",
+        "- deposited_amount: Amount of SOL deposited (net after fees)",
+        "- reward_debt: Tracks accumulated rewards at deposit time (deposited_amount * reward_per_share)",
+        "- claimed_total: Total rewards claimed so far"
       ],
       "type": {
         "kind": "struct",
@@ -1733,35 +2734,47 @@
           },
           {
             "name": "reward_debt",
+            "type": "u128"
+          },
+          {
+            "name": "claimed_total",
             "type": "u64"
-          },
-          {
-            "name": "last_claim_time",
-            "type": "i64"
-          },
-          {
-            "name": "total_claimed",
-            "type": "u64"
-          },
-          {
-            "name": "deposit_time",
-            "type": "i64"
-          },
-          {
-            "name": "lock_period",
-            "type": "i64"
           },
           {
             "name": "is_active",
             "type": "bool"
           },
           {
-            "name": "deployments_supported",
-            "type": "u32"
-          },
-          {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Claimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "backer",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "claimed_total",
+            "type": "u64"
+          },
+          {
+            "name": "reward_per_share",
+            "type": "u128"
+          },
+          {
+            "name": "claimed_at",
+            "type": "i64"
           }
         ]
       }
@@ -1803,6 +2816,10 @@
           },
           {
             "name": "deployment_cost",
+            "type": "u64"
+          },
+          {
+            "name": "borrowed_amount",
             "type": "u64"
           },
           {
@@ -2044,6 +3061,46 @@
       }
     },
     {
+      "name": "DepositMade",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "backer",
+            "type": "pubkey"
+          },
+          {
+            "name": "deposit_amount",
+            "type": "u64"
+          },
+          {
+            "name": "net_deposit",
+            "type": "u64"
+          },
+          {
+            "name": "reward_fee",
+            "type": "u64"
+          },
+          {
+            "name": "platform_fee",
+            "type": "u64"
+          },
+          {
+            "name": "total_deposited",
+            "type": "u64"
+          },
+          {
+            "name": "liquid_balance",
+            "type": "u64"
+          },
+          {
+            "name": "deposited_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
       "name": "EmergencyPauseToggled",
       "type": {
         "kind": "struct",
@@ -2161,6 +3218,34 @@
           },
           {
             "name": "suspended_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "RewardCredited",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "fee_reward",
+            "type": "u64"
+          },
+          {
+            "name": "fee_platform",
+            "type": "u64"
+          },
+          {
+            "name": "reward_per_share",
+            "type": "u128"
+          },
+          {
+            "name": "total_deposited",
+            "type": "u64"
+          },
+          {
+            "name": "credited_at",
             "type": "i64"
           }
         ]
@@ -2338,15 +3423,103 @@
     },
     {
       "name": "TreasuryPool",
+      "docs": [
+        "Fee-Based Treasury System with Reward-Per-Share Model",
+        "",
+        "Efficient reward distribution using accumulator pattern:",
+        "- reward_per_share: Accumulator that increases when fees are credited",
+        "- Each backer tracks reward_debt = deposited_amount * reward_per_share at deposit time",
+        "- Claimable = (deposited_amount * reward_per_share - reward_debt) / PRECISION"
+      ],
       "type": {
         "kind": "struct",
         "fields": [
           {
-            "name": "total_staked",
+            "name": "reward_per_share",
+            "type": "u128"
+          },
+          {
+            "name": "total_deposited",
             "type": "u64"
           },
           {
+            "name": "liquid_balance",
+            "type": "u64"
+          },
+          {
+            "name": "reward_pool_balance",
+            "type": "u64"
+          },
+          {
+            "name": "platform_pool_balance",
+            "type": "u64"
+          },
+          {
+            "name": "reward_fee_bps",
+            "type": "u64"
+          },
+          {
+            "name": "platform_fee_bps",
+            "type": "u64"
+          },
+          {
+            "name": "admin",
+            "type": "pubkey"
+          },
+          {
+            "name": "dev_wallet",
+            "type": "pubkey"
+          },
+          {
+            "name": "emergency_pause",
+            "type": "bool"
+          },
+          {
+            "name": "reward_pool_bump",
+            "type": "u8"
+          },
+          {
+            "name": "platform_pool_bump",
+            "type": "u8"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "backer_total_staked",
+            "type": "u128"
+          },
+          {
+            "name": "backer_stake_pool_bump",
+            "type": "u8"
+          },
+          {
             "name": "total_rewards_distributed",
+            "type": "u128"
+          },
+          {
+            "name": "admin_pool_balance",
+            "type": "u128"
+          },
+          {
+            "name": "admin_pool_bump",
+            "type": "u8"
+          },
+          {
+            "name": "current_apy_bps",
+            "type": "u64"
+          },
+          {
+            "name": "last_apy_update_ts",
+            "type": "i64"
+          },
+          {
+            "name": "last_distribution_time",
+            "type": "i64"
+          },
+          {
+            "name": "total_staked",
             "type": "u64"
           },
           {
@@ -2358,24 +3531,8 @@
             "type": "u64"
           },
           {
-            "name": "last_distribution_time",
-            "type": "i64"
-          },
-          {
-            "name": "emergency_pause",
-            "type": "bool"
-          },
-          {
-            "name": "admin",
-            "type": "pubkey"
-          },
-          {
             "name": "treasury_wallet",
             "type": "pubkey"
-          },
-          {
-            "name": "bump",
-            "type": "u8"
           }
         ]
       }
@@ -2408,6 +3565,35 @@
           {
             "name": "bump",
             "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "WithdrawRequested",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "backer",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          },
+          {
+            "name": "request_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "requested_at",
+            "type": "i64"
           }
         ]
       }

@@ -85,10 +85,14 @@ export const stakeSolAnchor = async (
     lender: wallet.publicKey.toString(),
   });
 
+  // NO reward_pool or platform_pool needed - 100% of deposit goes to TreasuryPool
+  // Fees come from developers when they pay for deployments
+
   const tx = await program.methods
     .stakeSol(new BN(amountLamports), new BN(lockPeriod))
     .accountsPartial({
       treasuryPool: treasuryPoolPda,
+      treasuryPda: treasuryPoolPda, // Same as treasuryPool
       lenderStake: lenderStakePda,
       lender: wallet.publicKey,
       systemProgram: SystemProgram.programId,
@@ -127,14 +131,11 @@ export const claimRewardsAnchor = async (
     const stakeAccount = await program.account.backerDeposit.fetch(lenderStakePda);
     console.log('[Anchor] Stake account data:', {
       backer: stakeAccount.backer.toString(),
-      depositedAmount: stakeAccount.depositedAmount.toString(),
-      rewardDebt: stakeAccount.rewardDebt.toString(),
-      lastClaimTime: new Date(stakeAccount.lastClaimTime.toNumber() * 1000).toISOString(),
-      totalClaimed: stakeAccount.totalClaimed.toString(),
-      depositTime: new Date(stakeAccount.depositTime.toNumber() * 1000).toISOString(),
-      lockPeriod: stakeAccount.lockPeriod.toString(),
-      isActive: stakeAccount.isActive,
-      deploymentsSupported: stakeAccount.deploymentsSupported,
+      depositedAmount: stakeAccount.depositedAmount?.toString() || '0',
+      rewardDebt: stakeAccount.rewardDebt?.toString() || '0',
+      claimedTotal: stakeAccount.claimedTotal?.toString() || '0',
+      isActive: stakeAccount.isActive || false,
+      bump: stakeAccount.bump || 0,
     });
   } catch (error) {
     console.error('[Anchor] Failed to fetch stake account:', error);
@@ -185,11 +186,18 @@ export const claimRewardsAnchor = async (
     throw simError;
   }
 
+  // Derive Reward Pool PDA
+  const [rewardPoolPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('reward_pool')],
+    D2D_PROGRAM_ID
+  );
+
   // Execute transaction
   const tx = await program.methods
     .claimRewards()
     .accountsPartial({
       treasuryPool: treasuryPoolPda,
+      rewardPool: rewardPoolPda,
       lenderStake: lenderStakePda,
       lender: wallet.publicKey,
       systemProgram: SystemProgram.programId,
@@ -236,17 +244,48 @@ export const fetchTreasuryPool = async (
   connection: Connection,
   wallet: WalletContextState,
 ) => {
-  const provider = createProvider(connection, wallet);
-  const program = getProgram(provider);
-  const treasuryPoolPda = getTreasuryPoolPda();
-
   try {
-    const treasuryPool = await program.account.treasuryPool.fetch(treasuryPoolPda);
-    return {
-      exists: true,
-      data: treasuryPool,
-    };
-  } catch (error) {
+    const provider = createProvider(connection, wallet);
+    const program = getProgram(provider);
+    const treasuryPoolPda = getTreasuryPoolPda();
+
+    // First check if account exists
+    const accountInfo = await connection.getAccountInfo(treasuryPoolPda);
+    if (!accountInfo) {
+      console.warn('[fetchTreasuryPool] Treasury Pool account does not exist');
+      return {
+        exists: false,
+        error: new Error('Treasury Pool account not found'),
+      };
+    }
+
+    // Try to fetch using Anchor
+    try {
+      const treasuryPool = await program.account.treasuryPool.fetch(treasuryPoolPda);
+      return {
+        exists: true,
+        data: treasuryPool,
+      };
+    } catch (fetchError: any) {
+      console.error('[fetchTreasuryPool] Failed to deserialize:', fetchError.message);
+      
+      // If deserialization fails, account might have old layout
+      if (fetchError.message?.includes('AccountDidNotDeserialize') || 
+          fetchError.message?.includes('offset') ||
+          fetchError.message?.includes('Failed to deserialize')) {
+        console.error('[fetchTreasuryPool] Account exists but has incompatible layout');
+        console.error('[fetchTreasuryPool] Account size:', accountInfo.data.length);
+        console.error('[fetchTreasuryPool] Expected size: ~278 bytes (new layout)');
+        console.error('[fetchTreasuryPool] Solution: Reset and reinitialize treasury pool');
+      }
+      
+      return {
+        exists: false,
+        error: fetchError,
+      };
+    }
+  } catch (error: any) {
+    console.error('[fetchTreasuryPool] Error:', error.message);
     return {
       exists: false,
       error: error,

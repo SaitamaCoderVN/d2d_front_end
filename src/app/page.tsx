@@ -47,7 +47,7 @@ export default function Home() {
             {/* Subtitle */}
             <p className="text-body-large max-w-2xl mx-auto mb-12">
               No need to manage rent, keypairs, or complex CLI commands. 
-              Deploy your devnet programs to mainnet with one click.
+              Deploy your Solana programs to devnet with one click.
             </p>
 
             {/* Stats */}
@@ -85,7 +85,7 @@ export default function Home() {
               
               <h3 className="text-heading-3 text-gray-900 mb-4">I'm a Developer</h3>
               <p className="text-gray-600 mb-8 leading-relaxed">
-                Deploy your Solana programs from devnet to mainnet instantly. 
+                Deploy your Solana programs to devnet instantly. 
                 We handle all the rent and complexity for just $5.
               </p>
               

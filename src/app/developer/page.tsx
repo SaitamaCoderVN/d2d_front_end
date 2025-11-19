@@ -83,7 +83,7 @@ export default function DeveloperPage() {
                   <Image src="/favicon.svg" alt="D2D" width={32} height={32} />
                 <div>
                   <h1 className="text-xl font-bold text-gray-900">Developer Dashboard</h1>
-                  <p className="text-xs text-gray-500">Deploy programs to mainnet</p>
+                  <p className="text-xs text-gray-500">Deploy programs to devnet</p>
                 </div>
               </Link>
               
@@ -120,7 +120,7 @@ export default function DeveloperPage() {
               Connect Your Wallet
             </h2>
             <p className="text-body-large max-w-md mx-auto mb-8">
-              Please connect your Solana wallet to start deploying programs to mainnet.
+              Please connect your Solana wallet to start deploying programs to devnet.
             </p>
             <WalletMultiButton />
           </div>

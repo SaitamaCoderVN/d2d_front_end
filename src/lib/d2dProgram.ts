@@ -62,6 +62,22 @@ export const getBackerDepositPda = (backer: PublicKey): PublicKey => {
   return deposit;
 };
 
+export const getRewardPoolPda = (): PublicKey => {
+  const [rewardPool] = PublicKey.findProgramAddressSync(
+    [Buffer.from('reward_pool')],
+    D2D_PROGRAM_ID
+  );
+  return rewardPool;
+};
+
+export const getPlatformPoolPda = (): PublicKey => {
+  const [platformPool] = PublicKey.findProgramAddressSync(
+    [Buffer.from('platform_pool')],
+    D2D_PROGRAM_ID
+  );
+  return platformPool;
+};
+
 export const createStakeSolInstruction = (
   amountLamports: number,
   lockPeriod: number,
@@ -72,13 +88,24 @@ export const createStakeSolInstruction = (
     lockPeriod: new BN(lockPeriod),
   });
 
+  const treasuryPoolPda = getTreasuryPoolPda();
+  const lenderStakePda = getBackerDepositPda(lender);
+
+  // Updated stake_sol instruction (NO FEES from backer):
+  // 1. treasury_pool (mut) - TreasuryPool state account
+  // 2. treasury_pda (mut) - Treasury Pool PDA (receives 100% of deposit)
+  // 3. lender_stake (mut) - BackerDeposit account
+  // 4. lender (mut, signer) - Backer wallet
+  // 5. system_program - System program
+
   return new TransactionInstruction({
     programId: D2D_PROGRAM_ID,
     keys: [
-      { pubkey: getTreasuryPoolPda(), isWritable: true, isSigner: false },
-      { pubkey: getBackerDepositPda(lender), isWritable: true, isSigner: false },
-      { pubkey: lender, isWritable: true, isSigner: true },
-      { pubkey: SystemProgram.programId, isWritable: false, isSigner: false },
+      { pubkey: treasuryPoolPda, isWritable: true, isSigner: false },      // treasury_pool
+      { pubkey: treasuryPoolPda, isWritable: true, isSigner: false },      // treasury_pda (same as treasury_pool)
+      { pubkey: lenderStakePda, isWritable: true, isSigner: false },       // lender_stake
+      { pubkey: lender, isWritable: true, isSigner: true },                 // lender
+      { pubkey: SystemProgram.programId, isWritable: false, isSigner: false }, // system_program
     ],
     data,
   });
@@ -101,13 +128,27 @@ export const createClaimRewardsInstruction = (lender: PublicKey): TransactionIns
   console.log('[D2D] Instruction data (base64):', Buffer.from(data).toString('base64'));
   console.log('[D2D] Instruction data length:', data.length);
 
+  // Get reward pool and platform pool PDAs
+  const [rewardPoolPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('reward_pool')],
+    D2D_PROGRAM_ID
+  );
+  
+  const [platformPoolPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('platform_pool')],
+    D2D_PROGRAM_ID
+  );
+
   const instruction = new TransactionInstruction({
     programId: D2D_PROGRAM_ID,
     keys: [
-      { pubkey: treasuryPoolPda, isWritable: true, isSigner: false },
-      { pubkey: lenderStakePda, isWritable: true, isSigner: false },
-      { pubkey: lender, isWritable: true, isSigner: true },
-      { pubkey: SystemProgram.programId, isWritable: false, isSigner: false },
+      { pubkey: treasuryPoolPda, isWritable: true, isSigner: false },      // treasury_pool
+      { pubkey: rewardPoolPda, isWritable: true, isSigner: false },      // reward_pool
+      { pubkey: platformPoolPda, isWritable: true, isSigner: false },     // platform_pool
+      { pubkey: treasuryPoolPda, isWritable: true, isSigner: false },     // treasury_pda (same as treasury_pool)
+      { pubkey: lenderStakePda, isWritable: true, isSigner: false },      // lender_stake
+      { pubkey: lender, isWritable: true, isSigner: true },                // lender
+      { pubkey: SystemProgram.programId, isWritable: false, isSigner: false }, // system_program
     ],
     data,
   });

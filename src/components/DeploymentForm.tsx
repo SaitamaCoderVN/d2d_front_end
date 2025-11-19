@@ -15,7 +15,7 @@ import {
 import { CostBreakdown, AppConfig } from '@/types';
 import idl from '@/idl/d2d_program_sol.json';
 import type { D2dProgramSol } from '@/types/d2d_program_sol';
-import { getTreasuryPoolPda, D2D_PROGRAM_ID } from '@/lib/d2dProgram';
+import { getTreasuryPoolPda, getRewardPoolPda, D2D_PROGRAM_ID } from '@/lib/d2dProgram';
 
 interface DeploymentFormProps {
   onDeploymentCreated: () => void;
@@ -90,6 +90,24 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
   
   // Simulation mode state
   const [isSimulationMode, setIsSimulationMode] = useState(false);
+
+  // Fetch config on mount
+  useEffect(() => {
+    const fetchConfig = async () => {
+      try {
+        console.log('📋 Fetching treasury config...');
+        const treasuryConfig = await configApi.getTreasuryConfig();
+        setConfig(treasuryConfig);
+        console.log('✅ Config loaded:', treasuryConfig);
+      } catch (error: any) {
+        console.error('❌ Failed to fetch config:', error);
+        // Don't block the UI, but log the error
+        // Config is used with optional chaining in most places
+      }
+    };
+    
+    fetchConfig();
+  }, []);
 
   // Check wallet network
   useEffect(() => {
@@ -229,9 +247,14 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
 
   // Phase 3: Send Payment and Execute Deployment
   const handleDeployment = async () => {
-    if (!publicKey || !costBreakdown || !config) {
+    if (!publicKey || !costBreakdown) {
       toast.error('❌ Missing required data. Please try again.');
       return;
+    }
+
+    // Config is optional (used for display only), but log if missing
+    if (!config) {
+      console.warn('⚠️  Config not loaded, proceeding with defaults');
     }
 
     console.log('🚀 Starting deployment flow...');
@@ -255,10 +278,12 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
       toast.loading('Creating payment transaction...', { id: 'payment' });
 
       const paymentAmount = costBreakdown.totalPayment;
-      const treasuryPoolAddress = getTreasuryPoolPda();
+      // Payment should go to Reward Pool PDA (not Treasury Pool PDA)
+      // According to the flow: developer pays fees (1% reward, 0.1% platform) to Reward Pool
+      const rewardPoolAddress = getRewardPoolPda();
 
       console.log('   Payment amount:', (paymentAmount / LAMPORTS_PER_SOL).toFixed(4), 'SOL');
-      console.log('   Treasury pool PDA:', treasuryPoolAddress.toString());
+      console.log('   Reward Pool PDA:', rewardPoolAddress.toString());
 
       const treasurySnapshot = await fetchTreasuryPoolSnapshot();
       if (treasurySnapshot) {
@@ -273,7 +298,7 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
       const transaction = new Transaction().add(
         SystemProgram.transfer({
           fromPubkey: publicKey,
-          toPubkey: treasuryPoolAddress,
+          toPubkey: rewardPoolAddress, // Send to Reward Pool PDA (receives developer fees)
           lamports: paymentAmount,
         })
       );
@@ -627,7 +652,7 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
             </svg>
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-gray-900">Deploy to Mainnet</h2>
+            <h2 className="text-2xl font-bold text-gray-900">Deploy to Devnet</h2>
             <p className="text-gray-600">Enter your devnet program ID to begin</p>
           </div>
         </div>
