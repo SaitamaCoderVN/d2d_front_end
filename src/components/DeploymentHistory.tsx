@@ -120,6 +120,12 @@ export default function DeploymentHistory({
   };
 
   const truncateAddress = (address: string, chars = 4) => {
+    if (!address || address === '' || address === 'TBD') {
+      return 'N/A';
+    }
+    if (address.length <= chars * 2) {
+      return address; // Don't truncate if already short
+    }
     return `${address.slice(0, chars)}...${address.slice(-chars)}`;
   };
 
@@ -203,9 +209,28 @@ export default function DeploymentHistory({
                     <div className="space-y-3">
                       <div className="flex items-center space-x-2">
                         <span className="text-sm font-medium text-gray-700">Devnet:</span>
-                        <code className="text-sm bg-gray-100 px-3 py-1.5 rounded font-mono text-gray-900">
-                          {truncateAddress(deployment.devnetProgramId || deployment.devnet_program_id || '', 8)}
-                        </code>
+                        {(() => {
+                          const devnetProgramId = deployment.devnetProgramId || deployment.devnet_program_id;
+                          return devnetProgramId ? (
+                            <a
+                              href={`https://explorer.solana.com/address/${devnetProgramId}?cluster=devnet`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-sm text-[#0066FF] hover:text-[#0052CC] underline font-mono flex items-center space-x-1"
+                            >
+                              <code className="text-sm bg-gray-100 px-3 py-1.5 rounded">
+                                {truncateAddress(devnetProgramId, 8)}
+                              </code>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                            </a>
+                          ) : (
+                            <code className="text-sm bg-gray-100 px-3 py-1.5 rounded font-mono text-gray-500">
+                              N/A
+                            </code>
+                          );
+                        })()}
                       </div>
                       
                       {(deployment.mainnetProgramId || deployment.mainnet_program_id) && (
@@ -226,10 +251,32 @@ export default function DeploymentHistory({
                       )}
                       
                       <div className="flex items-center space-x-2">
-                        <span className="text-sm font-medium text-gray-700">Deployer:</span>
-                        <code className="text-sm bg-gray-100 px-3 py-1.5 rounded font-mono text-gray-900">
-                          {truncateAddress(deployment.deployerWalletAddress || deployment.deployer_wallet_address || '', 8)}
-                        </code>
+                        <span className="text-sm font-medium text-gray-700">Expires:</span>
+                        {(() => {
+                          const expiresAt = deployment.subscriptionExpiresAt || deployment.subscription_expires_at;
+                          if (expiresAt) {
+                            const expiresDate = new Date(expiresAt);
+                            const now = new Date();
+                            const isExpired = expiresDate < now;
+                            const daysUntilExpiry = Math.ceil((expiresDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                            
+                            return (
+                              <code className={`text-sm bg-gray-100 px-3 py-1.5 rounded font-mono ${isExpired ? 'text-red-600' : daysUntilExpiry <= 7 ? 'text-orange-600' : 'text-gray-900'}`}>
+                                {isExpired 
+                                  ? `Expired ${formatDate(expiresAt)}`
+                                  : daysUntilExpiry <= 7
+                                  ? `Expires in ${daysUntilExpiry} day${daysUntilExpiry !== 1 ? 's' : ''}`
+                                  : formatDate(expiresAt)
+                                }
+                              </code>
+                            );
+                          }
+                          return (
+                            <code className="text-sm bg-gray-100 px-3 py-1.5 rounded font-mono text-gray-500">
+                              N/A
+                            </code>
+                          );
+                        })()}
                       </div>
                     </div>
 

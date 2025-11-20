@@ -79,15 +79,14 @@ export default function BackerPage() {
   // Extract values from on-chain data
   const userStake = onChainData?.userStake ?? 0;
   const totalStaked = onChainData?.totalStaked ?? 0;
+  const totalDeposited = onChainData?.totalDeposited ?? 0;
+  const liquidBalance = onChainData?.liquidBalance ?? 0;
+  const lockedBalance = onChainData?.lockedBalance ?? 0;
   const userRewards = onChainData?.userRewards ?? 0;
   const daysStaked = onChainData?.daysStaked ?? 0;
   const currentApy = onChainData?.currentApy ?? 0;
   const availableRewards = onChainData?.availableRewards ?? 0;
   const deploymentsSupported = onChainData?.deploymentsSupported ?? 0;
-  
-  // Calculate SOL locked (approximation based on deployment cost)
-  // This should ideally be calculated from active deployments
-  const SOL_LOCKED = totalStaked - availableRewards; // Rough estimate
 
   const handleStake = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -301,8 +300,18 @@ export default function BackerPage() {
     },
     {
       label: 'Total Pool',
-      value: isLoading ? 'Loading...' : `${totalStaked.toFixed(2)} SOL`,
+      value: isLoading ? 'Loading...' : `${totalDeposited.toFixed(2)} SOL`,
       subtitle: isLoading ? '' : 'TVL in treasury'
+    },
+    {
+      label: 'Locked for Deployments',
+      value: isLoading ? 'Loading...' : `${lockedBalance.toFixed(2)} SOL`,
+      subtitle: isLoading ? '' : 'SOL currently locked in active deployments'
+    },
+    {
+      label: 'Available for Deploy',
+      value: isLoading ? 'Loading...' : `${liquidBalance.toFixed(2)} SOL`,
+      subtitle: isLoading ? '' : 'SOL available for developers to borrow'
     },
     {
       label: 'Available Rewards',

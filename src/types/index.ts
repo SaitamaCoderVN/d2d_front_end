@@ -33,6 +33,8 @@ export interface Deployment {
   deployment_cost?: number;
   deploymentCost?: number;
   program_hash?: string;
+  subscription_expires_at?: string;
+  subscriptionExpiresAt?: string;
   created_at?: string;
   createdAt?: string;
   updated_at?: string;

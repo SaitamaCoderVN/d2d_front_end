@@ -10,6 +10,9 @@ import { fetchTreasuryPool, fetchStakeAccount } from './d2dProgramAnchor';
 export interface OnChainBackerData {
   // Treasury Pool data
   totalStaked: number; // SOL
+  totalDeposited: number; // SOL (total deposited by backers)
+  liquidBalance: number; // SOL (available for deployments)
+  lockedBalance: number; // SOL (locked in active deployments) = totalDeposited - liquidBalance
   totalFeesCollected: number; // SOL
   totalRewardsDistributed: number; // SOL
   currentApy: number; // Percentage (e.g., 10.5 for 10.5%)
@@ -54,6 +57,7 @@ export const fetchBackerDataOnChain = async (
     // Convert from lamports to SOL (divide by 1e9)
     const LAMPORTS_PER_SOL = 1_000_000_000;
     const totalDepositedLamports = treasury.totalDeposited?.toNumber() || 0;
+    const liquidBalanceLamports = treasury.liquidBalance?.toNumber() || 0;
     const rewardPoolBalanceLamports = treasury.rewardPoolBalance?.toNumber() || 0;
     const platformPoolBalanceLamports = treasury.platformPoolBalance?.toNumber() || 0;
     // rewardPerShare is u128, use toBigInt() to avoid precision loss
@@ -65,6 +69,8 @@ export const fetchBackerDataOnChain = async (
     
     // Convert to SOL
     const totalDeposited = totalDepositedLamports / LAMPORTS_PER_SOL;
+    const liquidBalance = liquidBalanceLamports / LAMPORTS_PER_SOL;
+    const lockedBalance = Math.max(0, totalDeposited - liquidBalance); // SOL locked in active deployments
     const rewardPoolBalance = rewardPoolBalanceLamports / LAMPORTS_PER_SOL;
     const platformPoolBalance = platformPoolBalanceLamports / LAMPORTS_PER_SOL;
     
@@ -88,6 +94,9 @@ export const fetchBackerDataOnChain = async (
       // User hasn't staked yet
       return {
         totalStaked,
+        totalDeposited,
+        liquidBalance,
+        lockedBalance,
         totalFeesCollected,
         totalRewardsDistributed,
         currentApy,
@@ -144,6 +153,9 @@ export const fetchBackerDataOnChain = async (
 
     return {
       totalStaked,
+      totalDeposited,
+      liquidBalance,
+      lockedBalance,
       totalFeesCollected,
       totalRewardsDistributed,
       currentApy,

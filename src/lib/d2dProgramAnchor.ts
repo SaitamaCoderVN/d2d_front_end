@@ -141,11 +141,18 @@ export const claimRewardsAnchor = async (
     console.error('[Anchor] Failed to fetch stake account:', error);
   }
 
+  // Derive Reward Pool PDA (needed for both simulation and execution)
+  const [rewardPoolPda] = PublicKey.findProgramAddressSync(
+    [Buffer.from('reward_pool')],
+    D2D_PROGRAM_ID
+  );
+
   // Build transaction for manual simulation
   const transaction = await program.methods
     .claimRewards()
     .accountsPartial({
       treasuryPool: treasuryPoolPda,
+      rewardPool: rewardPoolPda, // Required account for claim_rewards
       lenderStake: lenderStakePda,
       lender: wallet.publicKey,
       systemProgram: SystemProgram.programId,
@@ -186,13 +193,7 @@ export const claimRewardsAnchor = async (
     throw simError;
   }
 
-  // Derive Reward Pool PDA
-  const [rewardPoolPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from('reward_pool')],
-    D2D_PROGRAM_ID
-  );
-
-  // Execute transaction
+  // Execute transaction (rewardPoolPda already derived above)
   const tx = await program.methods
     .claimRewards()
     .accountsPartial({
