@@ -341,6 +341,12 @@ export default function BackerPage() {
               </Link>
               
               <nav className="hidden md:flex space-x-2">
+                <Link
+                  href="/leaderboard"
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-[#0066FF] hover:bg-gray-100 rounded-lg transition"
+                >
+                  🏆 Leaderboard
+                </Link>
                 <Link 
                   href="/developer"
                   className="px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition font-medium text-sm"

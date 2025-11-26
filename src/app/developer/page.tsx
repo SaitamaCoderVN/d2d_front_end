@@ -101,6 +101,12 @@ export default function DeveloperPage() {
                 >
                   Stake & Earn
                 </Link>
+                <Link
+                  href="/leaderboard"
+                  className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-[#0066FF] hover:bg-gray-100 rounded-lg transition"
+                >
+                  🏆 Leaderboard
+                </Link>
               </nav>
             </div>
             <WalletMultiButton />

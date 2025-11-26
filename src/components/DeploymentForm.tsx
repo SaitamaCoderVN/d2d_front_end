@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { BorshAccountsCoder, Idl } from '@coral-xyz/anchor';
-import { deploymentApi, configApi } from '@/lib/api';
+import { deploymentApi, configApi, poolApi } from '@/lib/api';
 import toast from 'react-hot-toast';
 import {
   PublicKey,
@@ -82,6 +82,10 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
   // Cost breakdown state
   const [costBreakdown, setCostBreakdown] = useState<CostBreakdown | null>(null);
   
+  // Treasury pool state
+  const [availableForDeploy, setAvailableForDeploy] = useState<number | null>(null);
+  const [isLoadingPool, setIsLoadingPool] = useState(false);
+  
   // Error state
   const [error, setError] = useState<string | null>(null);
   
@@ -91,7 +95,7 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
   // Simulation mode state
   const [isSimulationMode, setIsSimulationMode] = useState(false);
 
-  // Fetch config on mount
+  // Fetch config and pool state on mount
   useEffect(() => {
     const fetchConfig = async () => {
       try {
@@ -106,7 +110,30 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
       }
     };
     
+    const fetchPoolState = async () => {
+      try {
+        setIsLoadingPool(true);
+        console.log('📊 Fetching treasury pool state...');
+        const poolState = await poolApi.getPoolState();
+        setAvailableForDeploy(poolState.availableForDeploySOL);
+        console.log('✅ Pool state loaded:', {
+          availableForDeploy: poolState.availableForDeploySOL,
+          treasuryPoolPDA: poolState.treasuryPoolPDA,
+        });
+      } catch (error: any) {
+        console.error('❌ Failed to fetch pool state:', error);
+        // Don't block the UI, but log the error
+      } finally {
+        setIsLoadingPool(false);
+      }
+    };
+    
     fetchConfig();
+    fetchPoolState();
+    
+    // Refresh pool state every 30 seconds
+    const interval = setInterval(fetchPoolState, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   // Check wallet network
@@ -748,6 +775,41 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
                   : ' ⚠️  Please ensure backend is in Devnet mode.'
                 }
               </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Treasury Pool Balance Card */}
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600">Treasury Pool</p>
+                <p className="text-xs text-gray-500">Available for Deploy</p>
+              </div>
+            </div>
+            <div className="text-right">
+              {isLoadingPool ? (
+                <div className="flex items-center space-x-2">
+                  <svg className="animate-spin h-5 w-5 text-green-600" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  <span className="text-sm text-gray-500">Loading...</span>
+                </div>
+              ) : availableForDeploy !== null ? (
+                <div>
+                  <p className="text-2xl font-bold text-green-700">{availableForDeploy.toFixed(4)} SOL</p>
+                  <p className="text-xs text-gray-500 mt-1">Pool: D6h9mgXL5enPyiG2M1W7Jn9yjXh8md1fCAcP5zBJH6ma</p>
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500">Unable to load</p>
+              )}
             </div>
           </div>
         </div>

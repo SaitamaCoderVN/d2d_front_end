@@ -99,5 +99,67 @@ export const deploymentApi = {
   },
 };
 
+export const closeProgramApi = {
+  /**
+   * Close a deployed program and return all SOL to treasury pool
+   */
+  closeProgram: async (deploymentId: string, userWalletAddress: string): Promise<{
+    deploymentId: string;
+    status: string;
+    closeSignature: string;
+    refundSignature?: string;
+    recoveredLamports: number;
+    message: string;
+  }> => {
+    const response = await api.post('/api/close-program', {
+      deploymentId,
+      userWalletAddress,
+    });
+    return response.data;
+  },
+};
+
+export interface PoolState {
+  rewardPerShare: string;
+  totalDeposited: number; // lamports
+  liquidBalance: number; // lamports - Available for deployment
+  rewardPoolBalance: number; // lamports
+  platformPoolBalance: number; // lamports
+  treasuryPoolPDA: string;
+  availableForDeploySOL: number; // SOL (not lamports)
+}
+
+export interface LeaderboardEntry {
+  wallet: string;
+  depositedAmount: number; // lamports
+  claimableRewards: number; // lamports
+  claimedTotal: number; // lamports
+  isActive: boolean;
+}
+
+export interface LeaderboardResponse {
+  leaderboard: LeaderboardEntry[];
+  rewardPoolBalance: number; // lamports - Total SOL in reward pool
+  rewardPoolAddress: string; // Reward pool PDA address
+}
+
+export const poolApi = {
+  /**
+   * Get current treasury pool state
+   */
+  getPoolState: async (): Promise<PoolState> => {
+    const response = await api.get<PoolState>('/api/pool/state');
+    return response.data;
+  },
+
+  /**
+   * Get leaderboard of all backers sorted by claimable rewards
+   */
+  getLeaderboard: async (): Promise<LeaderboardResponse> => {
+    const response = await api.get<LeaderboardResponse>('/api/pool/leaderboard');
+    return response.data;
+  },
+};
+
 export default api;
 

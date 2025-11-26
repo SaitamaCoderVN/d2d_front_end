@@ -3,7 +3,7 @@
  * This replaces localStorage-based calculations with real on-chain data
  */
 
-import { Connection } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 import { fetchTreasuryPool, fetchStakeAccount } from './d2dProgramAnchor';
 
@@ -44,24 +44,48 @@ export const fetchBackerDataOnChain = async (
   }
 
   try {
-    // Fetch Treasury Pool
+    // Use the exact treasury pool address
+    const TREASURY_POOL_ADDRESS = 'D6h9mgXL5enPyiG2M1W7Jn9yjXh8md1fCAcP5zBJH6ma';
+    const treasuryPoolPDA = new PublicKey(TREASURY_POOL_ADDRESS);
+    
+    // Fetch Treasury Pool struct and account balance
     const treasuryResult = await fetchTreasuryPool(connection, wallet);
-    if (!treasuryResult.exists || !treasuryResult.data) {
-      console.warn('Treasury Pool not found');
+    const accountInfo = await connection.getAccountInfo(treasuryPoolPDA, 'confirmed');
+    
+    if (!accountInfo) {
+      console.warn('Treasury Pool account not found at', TREASURY_POOL_ADDRESS);
       return null;
     }
 
-    const treasury = treasuryResult.data;
+    // Get actual account balance (total SOL in the account)
+    const actualAccountBalanceLamports = accountInfo.lamports;
+    const actualAccountBalanceSOL = actualAccountBalanceLamports / 1_000_000_000;
+    
+    // Calculate rent exemption
+    const accountDataSize = accountInfo.data.length;
+    const rentExemption = await connection.getMinimumBalanceForRentExemption(accountDataSize);
+    const rentExemptionSOL = rentExemption / 1_000_000_000;
+    
+    // Available SOL = actual balance - rent exemption
+    const availableBalanceLamports = Math.max(0, actualAccountBalanceLamports - rentExemption);
+    const availableBalanceSOL = availableBalanceLamports / 1_000_000_000;
+    
+    // Use account balance as source of truth (total SOL in account)
+    // This is what the user wants to see
+    const liquidBalanceSOL = actualAccountBalanceSOL;
+    
+    const treasury = treasuryResult.exists && treasuryResult.data ? treasuryResult.data : null;
     
     // Use new reward-per-share model fields
     // Convert from lamports to SOL (divide by 1e9)
     const LAMPORTS_PER_SOL = 1_000_000_000;
-    const totalDepositedLamports = treasury.totalDeposited?.toNumber() || 0;
-    const liquidBalanceLamports = treasury.liquidBalance?.toNumber() || 0;
-    const rewardPoolBalanceLamports = treasury.rewardPoolBalance?.toNumber() || 0;
-    const platformPoolBalanceLamports = treasury.platformPoolBalance?.toNumber() || 0;
+    const totalDepositedLamports = treasury?.totalDeposited?.toNumber() || 0;
+    // Use actual account balance instead of struct field
+    const liquidBalanceLamports = actualAccountBalanceLamports;
+    const rewardPoolBalanceLamports = treasury?.rewardPoolBalance?.toNumber() || 0;
+    const platformPoolBalanceLamports = treasury?.platformPoolBalance?.toNumber() || 0;
     // rewardPerShare is u128, use toBigInt() to avoid precision loss
-    const rewardPerShare = treasury.rewardPerShare ? 
+    const rewardPerShare = treasury?.rewardPerShare ? 
       (typeof treasury.rewardPerShare === 'bigint' ? treasury.rewardPerShare : 
        treasury.rewardPerShare.toBigInt ? treasury.rewardPerShare.toBigInt() : 
        BigInt(treasury.rewardPerShare.toString())) : 
@@ -69,15 +93,16 @@ export const fetchBackerDataOnChain = async (
     
     // Convert to SOL
     const totalDeposited = totalDepositedLamports / LAMPORTS_PER_SOL;
-    const liquidBalance = liquidBalanceLamports / LAMPORTS_PER_SOL;
-    const lockedBalance = Math.max(0, totalDeposited - liquidBalance); // SOL locked in active deployments
+    // Use actual account balance (total SOL in account D6h9mgXL5enPyiG2M1W7Jn9yjXh8md1fCAcP5zBJH6ma)
+    const liquidBalance = liquidBalanceSOL; // This is the total account balance
+    const lockedBalance = Math.max(0, totalDeposited - availableBalanceSOL); // SOL locked in active deployments (if struct is available)
     const rewardPoolBalance = rewardPoolBalanceLamports / LAMPORTS_PER_SOL;
     const platformPoolBalance = platformPoolBalanceLamports / LAMPORTS_PER_SOL;
     
     // Legacy fields (for backward compatibility, may be 0)
-    const totalStakedLamports = treasury.totalStaked?.toNumber() || totalDepositedLamports;
-    const totalFeesCollectedLamports = treasury.totalFeesCollected?.toNumber() || rewardPoolBalanceLamports;
-    const totalRewardsDistributedLamports = treasury.totalRewardsDistributed?.toNumber() || 0;
+    const totalStakedLamports = treasury?.totalStaked?.toNumber() || totalDepositedLamports;
+    const totalFeesCollectedLamports = treasury?.totalFeesCollected?.toNumber() || rewardPoolBalanceLamports;
+    const totalRewardsDistributedLamports = treasury?.totalRewardsDistributed?.toNumber() || 0;
     
     // Convert to SOL
     const totalStaked = totalStakedLamports / LAMPORTS_PER_SOL;
@@ -85,8 +110,15 @@ export const fetchBackerDataOnChain = async (
     const totalRewardsDistributed = totalRewardsDistributedLamports / LAMPORTS_PER_SOL;
     
     // APY is no longer used in fee-based model, but calculate from fees if available
-    const currentApy = treasury.currentApy?.toNumber() || 0;
+    const currentApy = treasury?.currentApy?.toNumber() || 0;
     const availableRewards = rewardPoolBalance; // Direct from reward pool (already in SOL)
+    
+    // Log for debugging
+    console.log('[fetchBackerDataOnChain] Treasury Pool:', TREASURY_POOL_ADDRESS);
+    console.log('  Account balance (total):', actualAccountBalanceSOL.toFixed(9), 'SOL');
+    console.log('  Rent exemption:', rentExemptionSOL.toFixed(9), 'SOL');
+    console.log('  Available (after rent):', availableBalanceSOL.toFixed(9), 'SOL');
+    console.log('  Using liquidBalance:', liquidBalanceSOL.toFixed(9), 'SOL (total account balance)');
 
     // Fetch Backer Deposit
     const stakeResult = await fetchStakeAccount(connection, wallet);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { deploymentApi } from '@/lib/api';
+import { deploymentApi, closeProgramApi } from '@/lib/api';
 import { Deployment, DeploymentStatus } from '@/types';
 import toast from 'react-hot-toast';
 import { incrementProgramsDeployed } from '@/lib/backerStorage';
@@ -17,7 +17,24 @@ export default function DeploymentHistory({
 }: DeploymentHistoryProps) {
   const [deployments, setDeployments] = useState<Deployment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [closingDeploymentId, setClosingDeploymentId] = useState<string | null>(null);
   const successfulDeploymentsRef = useRef<Set<string>>(new Set());
+  const isInitialLoadRef = useRef<boolean>(true);
+
+  // Load successful deployments from localStorage on mount to prevent showing toasts on reload
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem(`deployment-toasts-${userWalletAddress}`);
+      if (stored) {
+        try {
+          const storedIds = JSON.parse(stored) as string[];
+          successfulDeploymentsRef.current = new Set(storedIds);
+        } catch (e) {
+          console.warn('Failed to parse stored deployment toasts:', e);
+        }
+      }
+    }
+  }, [userWalletAddress]);
 
   useEffect(() => {
     fetchDeployments();
@@ -45,18 +62,55 @@ export default function DeploymentHistory({
     try {
       const data = await deploymentApi.getByUser(userWalletAddress);
       
+      // On initial load, don't show toasts - just populate the ref
+      if (isInitialLoadRef.current) {
+        data.forEach((deployment) => {
+          if (deployment.status === DeploymentStatus.SUCCESS && deployment.id) {
+            successfulDeploymentsRef.current.add(deployment.id);
+          }
+        });
+        // Save to localStorage
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(
+            `deployment-toasts-${userWalletAddress}`,
+            JSON.stringify(Array.from(successfulDeploymentsRef.current))
+          );
+        }
+        isInitialLoadRef.current = false;
+        setDeployments(data);
+        setIsLoading(false);
+        return;
+      }
+      
+      // Only show toast for deployments that just transitioned to SUCCESS
       const newSuccessDeployments = data.filter(
-        (newDep) =>
-          newDep.status === DeploymentStatus.SUCCESS &&
-          !deployments.find(
-            (oldDep) => oldDep.id === newDep.id && oldDep.status === DeploymentStatus.SUCCESS,
-          ),
+        (newDep) => {
+          if (newDep.status !== DeploymentStatus.SUCCESS || !newDep.id) {
+            return false;
+          }
+          
+          // Check if this deployment was in a different status before
+          const oldDep = deployments.find((d) => d.id === newDep.id);
+          const wasJustCompleted = oldDep && oldDep.status !== DeploymentStatus.SUCCESS;
+          
+          // Also check if we've already shown toast for this deployment
+          const alreadyShown = successfulDeploymentsRef.current.has(newDep.id);
+          
+          return wasJustCompleted && !alreadyShown;
+        },
       );
 
       newSuccessDeployments.forEach((deployment) => {
-        // Check if we've already counted this deployment
-        if (deployment.id && !successfulDeploymentsRef.current.has(deployment.id)) {
+        if (deployment.id) {
           successfulDeploymentsRef.current.add(deployment.id);
+          
+          // Save to localStorage
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(
+              `deployment-toasts-${userWalletAddress}`,
+              JSON.stringify(Array.from(successfulDeploymentsRef.current))
+            );
+          }
           
           // Increment programs deployed in localStorage
           incrementProgramsDeployed();
@@ -110,9 +164,67 @@ export default function DeploymentHistory({
         label: 'Failed',
         badgeClass: 'badge-error',
         icon: '❌'
+      },
+      [DeploymentStatus.CLOSED]: {
+        label: 'Closed',
+        badgeClass: 'badge-gray',
+        icon: '🔒'
       }
     };
     return configs[status] || configs[DeploymentStatus.PENDING];
+  };
+
+  const handleCloseProgram = async (deploymentId: string) => {
+    if (!deploymentId || deploymentId === '') {
+      toast.error('Deployment ID is required');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to close this program? All SOL will be returned to the treasury pool.')) {
+      return;
+    }
+
+    setClosingDeploymentId(deploymentId);
+    
+    try {
+      console.log('Closing program:', { deploymentId, userWalletAddress });
+      const result = await closeProgramApi.closeProgram(deploymentId, userWalletAddress);
+      
+      toast.success(
+        <div>
+          <div className="font-semibold mb-1">✅ Program Closed Successfully!</div>
+          <div className="text-sm">
+            Recovered {result.recoveredLamports / 1e9} SOL
+          </div>
+        </div>,
+        { duration: 6000 }
+      );
+
+      // Refresh deployments list
+      await fetchDeployments();
+    } catch (error: any) {
+      console.error('Failed to close program:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status,
+      });
+      
+      const errorMessage = error.response?.data?.message 
+        || error.response?.data?.error 
+        || error.message 
+        || 'Failed to close program. Please check backend logs for details.';
+      
+      toast.error(
+        <div>
+          <div className="font-semibold mb-1">❌ Failed to Close Program</div>
+          <div className="text-sm">{errorMessage}</div>
+        </div>,
+        { duration: 8000 }
+      );
+    } finally {
+      setClosingDeploymentId(null);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -338,6 +450,33 @@ export default function DeploymentHistory({
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                         </svg>
                       </div>
+                    </div>
+                  )}
+
+                  {deployment.status === DeploymentStatus.SUCCESS && (
+                    <div className="ml-4">
+                      <button
+                        onClick={() => handleCloseProgram(deployment.id || deployment._id || '')}
+                        disabled={closingDeploymentId === (deployment.id || deployment._id)}
+                        className="px-4 py-2 bg-red-500 hover:bg-red-600 disabled:bg-gray-400 disabled:cursor-not-allowed text-white rounded-lg font-medium transition flex items-center space-x-2"
+                      >
+                        {closingDeploymentId === (deployment.id || deployment._id) ? (
+                          <>
+                            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                            <span>Closing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                            <span>Close Program</span>
+                          </>
+                        )}
+                      </button>
                     </div>
                   )}
                 </div>
