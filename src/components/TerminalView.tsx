@@ -113,7 +113,7 @@ export default function TerminalView({
       {/* Logs Area */}
       <div className={`flex-1 overflow-y-auto p-4 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent transition-opacity duration-200 ${isCollapsed ? 'opacity-0' : 'opacity-100'}`}>
         {logs.length === 0 ? (
-          <div className="text-slate-600 italic">> System ready. Waiting for commands...</div>
+          <div className="text-slate-600 italic">{'>'} System ready. Waiting for commands...</div>
         ) : (
           <div className="space-y-1">
             {logs.map((log, index) => (

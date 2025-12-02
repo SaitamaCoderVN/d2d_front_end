@@ -94,7 +94,7 @@ export default function Home() {
                     'Instant mainnet verification'
                   ].map((feature, index) => (
                     <li key={index} className="flex items-center space-x-3 text-sm text-slate-300">
-                      <span className="text-emerald-500 font-mono">>></span>
+                      <span className="text-emerald-500 font-mono">{'>'}{'>'}</span>
                       <span>{feature}</span>
                     </li>
                   ))}
@@ -139,7 +139,7 @@ export default function Home() {
                     'Transparent on-chain metrics'
                   ].map((feature, index) => (
                     <li key={index} className="flex items-center space-x-3 text-sm text-slate-300">
-                      <span className="text-purple-500 font-mono">>></span>
+                      <span className="text-purple-500 font-mono">{'>'}{'>'}</span>
                       <span>{feature}</span>
                     </li>
                   ))}

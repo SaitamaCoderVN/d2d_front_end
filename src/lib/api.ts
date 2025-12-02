@@ -191,7 +191,7 @@ export const pointsApi = {
    * Get points for a wallet address
    */
   getPoints: async (walletAddress: string): Promise<PointsInfo> => {
-    const response = await api.get<{ success: boolean; data: PointsInfo }>(`/api/points/${walletAddress}`);
+    const response = await api.get<{ success: boolean; data: PointsInfo; error?: string }>(`/api/points/${walletAddress}`);
     if (response.data.success) {
       return response.data.data;
     }
