@@ -4,11 +4,15 @@ import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from './WalletButton';
 import PointsDisplay from './PointsDisplay';
 
-export default function WalletWithPoints() {
+interface WalletWithPointsProps {
+  className?: string;
+}
+
+export default function WalletWithPoints({ className = "flex items-center space-x-3" }: WalletWithPointsProps) {
   const { connected } = useWallet();
 
   return (
-    <div className="flex items-center space-x-3">
+    <div className={className}>
       {connected && <PointsDisplay />}
       <WalletMultiButton />
     </div>

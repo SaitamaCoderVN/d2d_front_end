@@ -9,26 +9,40 @@ const config: Config = {
   darkMode: 'class',
   theme: {
     extend: {
+      fontFamily: {
+        sans: ['var(--font-inter)', 'sans-serif'],
+        mono: ['var(--font-mono)', 'monospace'],
+      },
       colors: {
-        primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+        // Base Dark Theme Colors
+        obsidian: '#0B0E14', // Deepest background
+        slate: {
+          850: '#151b28', // Panel background
+          900: '#0f172a',
+          950: '#020617',
         },
+        // Accent Colors
+        emerald: {
+          400: '#34d399', // Neon Green Text
+          500: '#10b981', // Neon Green Border/Bg
+          900: '#064e3b', // Deep Green Glow
+        },
+        // Solana Brand Colors
+        solana: {
+          purple: '#9945FF',
+          green: '#14F195',
+        },
+      },
+      backgroundImage: {
+        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+        'solana-gradient': 'linear-gradient(to right, #9945FF, #14F195)',
       },
       animation: {
         'spin-slow': 'spin 3s linear infinite',
+        'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
     },
   },
   plugins: [],
 }
 export default config
-

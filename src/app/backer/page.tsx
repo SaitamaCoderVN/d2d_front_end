@@ -6,27 +6,14 @@ import WalletWithPoints from '@/components/WalletWithPoints';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
-import Image from 'next/image';
-import {
-  getBackerData,
-  updateUserStake,
-  calculateUserRewards,
-  calculateAPY,
-  claimRewards,
-} from '@/lib/backerStorage';
-import {
-  createClaimRewardsInstruction,
-  createStakeSolInstruction,
-  prepareTransaction,
-  checkStakeAccountExists,
-} from '@/lib/d2dProgram';
-import { debugClaimRewards } from '@/lib/debugUtils';
 import { claimRewardsAnchor, stakeSolAnchor } from '@/lib/d2dProgramAnchor';
 import { fetchBackerDataOnChain, OnChainBackerData } from '@/lib/backerOnChain';
+import { checkStakeAccountExists } from '@/lib/d2dProgram';
+import { debugClaimRewards } from '@/lib/debugUtils';
 
 export default function BackerPage() {
   const wallet = useWallet();
-  const { publicKey, connected, sendTransaction } = wallet;
+  const { publicKey, connected } = wallet;
   const { connection } = useConnection();
   
   const [stakeAmount, setStakeAmount] = useState('');
@@ -78,12 +65,12 @@ export default function BackerPage() {
 
   // Extract values from on-chain data
   const userStake = onChainData?.userStake ?? 0;
-  const totalStaked = onChainData?.totalStaked ?? 0;
+  // const totalStaked = onChainData?.totalStaked ?? 0; // Unused
   const totalDeposited = onChainData?.totalDeposited ?? 0;
   const liquidBalance = onChainData?.liquidBalance ?? 0;
   const lockedBalance = onChainData?.lockedBalance ?? 0;
   const userRewards = onChainData?.userRewards ?? 0;
-  const daysStaked = onChainData?.daysStaked ?? 0;
+  // const daysStaked = onChainData?.daysStaked ?? 0; // Unused
   const currentApy = onChainData?.currentApy ?? 0;
   const availableRewards = onChainData?.availableRewards ?? 0;
   const deploymentsSupported = onChainData?.deploymentsSupported ?? 0;
@@ -114,7 +101,6 @@ export default function BackerPage() {
       // Check wallet balance before staking
       const balance = await connection.getBalance(publicKey);
       const balanceSOL = balance / LAMPORTS_PER_SOL;
-      console.log(`[Stake] Wallet balance: ${balanceSOL.toFixed(4)} SOL (${balance} lamports)`);
       
       // Estimate required balance: deposit + rent exemption (~1.4M) + transaction fee (~10k)
       const RENT_EXEMPTION_ESTIMATE = 1_400_000; // ~1.4M lamports for new account
@@ -122,12 +108,9 @@ export default function BackerPage() {
       const amountLamports = Math.floor(amount * LAMPORTS_PER_SOL);
       const estimatedRequired = amountLamports + RENT_EXEMPTION_ESTIMATE + TRANSACTION_FEE_ESTIMATE;
       
-      console.log(`[Stake] Deposit amount: ${amount} SOL (${amountLamports} lamports)`);
-      console.log(`[Stake] Estimated required: ${(estimatedRequired / LAMPORTS_PER_SOL).toFixed(4)} SOL (${estimatedRequired} lamports)`);
-      
       if (balance < estimatedRequired) {
         const needed = (estimatedRequired - balance) / LAMPORTS_PER_SOL;
-        toast.error(`Insufficient balance. Need ${(estimatedRequired / LAMPORTS_PER_SOL).toFixed(4)} SOL, have ${balanceSOL.toFixed(4)} SOL. Missing: ${needed.toFixed(4)} SOL`, { id: 'stake' });
+        toast.error(`Insufficient balance. Need ${(estimatedRequired / LAMPORTS_PER_SOL).toFixed(4)} SOL, have ${balanceSOL.toFixed(4)} SOL.`, { id: 'stake' });
         return;
       }
 
@@ -150,12 +133,10 @@ export default function BackerPage() {
             { id: 'stake', duration: 10000 }
           );
           throw new Error(
-            'AccountDiscriminatorMismatch: Your stake account exists but has an old format. ' +
-            'This usually happens after a program update. Please contact support.'
+            'AccountDiscriminatorMismatch: Your stake account exists but has an old format.'
           );
         }
         
-        // Re-throw other errors
         throw stakeError;
       }
 
@@ -218,12 +199,12 @@ export default function BackerPage() {
     }
 
     if (!onChainData || userRewards <= 0) {
-      toast.error('No rewards to claim. Please wait for rewards to accumulate.');
+      toast.error('No rewards to claim.');
       return;
     }
     
     if (!onChainData.isActive) {
-      toast.error('Your stake is inactive. Please stake SOL first.');
+      toast.error('Your stake is inactive.');
       return;
     }
 
@@ -235,14 +216,14 @@ export default function BackerPage() {
       // Check if stake account exists
       const accountExists = await checkStakeAccountExists(connection, publicKey);
       if (!accountExists) {
-        toast.error('Stake account not found. Please stake SOL first.', { id: 'claim' });
+        toast.error('Stake account not found.', { id: 'claim' });
         setIsClaiming(false);
         return;
       }
 
-      toast.loading('Claiming rewards with Anchor client...', { id: 'claim' });
+      toast.loading('Claiming rewards...', { id: 'claim' });
 
-      // Use Anchor client method (more reliable)
+      // Use Anchor client method
       const signature = await claimRewardsAnchor(connection, wallet);
 
       toast.loading('Confirming transaction...', { id: 'claim' });
@@ -274,28 +255,12 @@ export default function BackerPage() {
     } catch (error: any) {
       console.error('Claim error:', error);
       
-      // Enhanced error messages
       let errorMessage = 'Failed to claim rewards';
       
-      if (error.message?.includes('User rejected') || error.message?.includes('User declined')) {
+      if (error.message?.includes('User rejected')) {
         errorMessage = 'Transaction cancelled';
-      } else if (error.message?.includes('AccountNotFound') || error.message?.includes('could not find account')) {
-        errorMessage = 'Stake account not found. Please stake SOL first.';
-      } else if (error.message?.includes('NoRewardsToClaim') || error.message?.includes('0x1775')) {
-        errorMessage = 'No rewards available to claim yet. Please wait for rewards to accumulate.';
-      } else if (error.message?.includes('InsufficientTreasuryFunds') || error.message?.includes('0x1776')) {
-        errorMessage = 'Treasury has insufficient funds. Please contact support.';
-      } else if (error.message?.includes('InactiveStake') || error.message?.includes('0x1772')) {
-        errorMessage = 'Your stake is inactive. Please stake SOL first.';
-      } else if (error.logs) {
-        console.error('Transaction logs:', error.logs);
-        // Try to parse program error from logs
-        const errorLog = error.logs.find((log: string) => log.includes('Error:'));
-        if (errorLog) {
-          errorMessage = `Program error: ${errorLog}`;
-        } else {
-          errorMessage = `Transaction failed: ${error.message}`;
-        }
+      } else if (error.message?.includes('NoRewardsToClaim')) {
+        errorMessage = 'No rewards available to claim yet.';
       } else if (error.message) {
         errorMessage = error.message;
       }
@@ -350,96 +315,70 @@ export default function BackerPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="header-sticky">
-        <div className="container-main">
-          <div className="flex justify-between items-center h-20">
-            <div className="flex items-center space-x-8">
-              <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition">
-                  <Image src="/favicon.svg" alt="D2D" width={32} height={32} />
-                <div>
-                  <h1 className="text-xl font-bold text-gray-900">Backer Dashboard</h1>
-                  <p className="text-xs text-gray-500">Stake & earn rewards</p>
-                </div>
-              </Link>
-              
-              <nav className="hidden md:flex space-x-2">
-                <Link 
-                  href="/leaderboard"
-                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-[#0066FF] hover:bg-gray-100 rounded-lg transition"
-                >
-                  🏆 Leaderboard
-                </Link>
-                <Link 
-                  href="/developer"
-                  className="px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition font-medium text-sm"
-                >
-                  Deploy
-                </Link>
-                <Link 
-                  href="/backer"
-                  className="px-4 py-2 rounded-lg bg-[#0066FF] text-white font-medium text-sm"
-                >
-                  Stake & Earn
-                </Link>
-              </nav>
-            </div>
-            <WalletWithPoints />
+    <div className="min-h-screen bg-[#0B0E14]">
+      {/* Header Removed - Handled by Sidebar */}
+      
+      <main className="container-main py-8">
+        <div className="mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold text-slate-200 font-mono flex items-center gap-3">
+              <span className="text-emerald-500">&gt;</span> LIQUIDITY_POOL
+            </h1>
+            <p className="text-slate-500 mt-1 font-mono text-sm">Stake & earn rewards</p>
+          </div>
+          <div className="flex items-center gap-2 bg-emerald-500/10 px-3 py-1.5 rounded border border-emerald-500/20">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span className="text-xs font-mono text-emerald-400">POOL ACTIVE</span>
           </div>
         </div>
-      </header>
 
-      <main className="container-main py-12">
         {!connected ? (
-          <div className="text-center py-32">
-            <div className="w-24 h-24 bg-[#0066FF] rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-blue">
-              <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="text-center py-20 bg-slate-900/30 rounded-md border border-slate-800 border-dashed">
+            <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6 border border-slate-700">
+              <svg className="w-10 h-10 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
-            <h2 className="text-heading-2 text-gray-900 mb-6">
-              Connect Your Wallet
-            </h2>
-            <p className="text-body-large max-w-md mx-auto mb-8">
-              Please connect your Solana wallet to start staking and earning rewards.
-            </p>
-            <WalletWithPoints />
+            <h2 className="text-xl font-bold text-slate-200 mb-2 font-mono">WALLET_DISCONNECTED</h2>
+            <p className="text-slate-500 mb-8 font-mono text-sm">Please connect your wallet to access the staking pool.</p>
+            <div className="inline-block">
+              <WalletWithPoints />
+            </div>
           </div>
         ) : (
           <div className="space-y-8">
             {/* Stats Overview */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {stats.map((stat, index) => (
-                <div key={index} className="stat-card">
-                  <div className="stat-label">{stat.label}</div>
-                  <div className="stat-value">{stat.value}</div>
-                  <div className="stat-subtitle">{stat.subtitle}</div>
+                <div key={index} className="bg-[#151b28] p-4 rounded-md border border-slate-800">
+                  <div className="text-xs font-mono text-slate-500 uppercase mb-2">{stat.label}</div>
+                  <div className="text-xl font-bold text-slate-200 font-mono truncate">{stat.value}</div>
+                  <div className="text-[10px] text-slate-500 font-mono mt-1">{stat.subtitle}</div>
                 </div>
               ))}
             </div>
 
             {/* Claim Rewards Section */}
             {userRewards > 0 && (
-              <div className="card p-8 border-2 border-[#0066FF]">
+              <div className="bg-emerald-900/10 border border-emerald-500/30 rounded-md p-6">
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
                   <div className="flex-1">
                     <div className="flex items-center space-x-3 mb-2">
-                      <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center">
-                        <svg className="w-6 h-6 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                      <div className="w-10 h-10 bg-emerald-500/20 rounded flex items-center justify-center text-emerald-400 border border-emerald-500/30">
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                         </svg>
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold text-gray-900">Rewards Available!</h3>
-                        <p className="text-sm text-gray-600">You have earned rewards from program deployments</p>
+                        <h3 className="text-lg font-bold text-emerald-400 font-mono">REWARDS_AVAILABLE</h3>
+                        <p className="text-xs text-emerald-500/70 font-mono">You have earned rewards from program deployments</p>
                       </div>
                     </div>
-                    <div className="mt-4 p-4 bg-green-50 rounded-lg">
-                      <div className="flex items-baseline space-x-2">
-                        <span className="text-3xl font-bold text-green-600">{userRewards.toFixed(4)}</span>
-                        <span className="text-lg text-gray-600">SOL</span>
-                        <span className="text-sm text-gray-500">≈ ${(userRewards * SOL_PRICE).toFixed(2)}</span>
+                    <div className="mt-2 p-3 bg-emerald-500/5 rounded border border-emerald-500/10 inline-block">
+                      <div className="flex items-baseline space-x-2 font-mono">
+                        <span className="text-2xl font-bold text-emerald-400">{userRewards.toFixed(4)}</span>
+                        <span className="text-sm text-emerald-600">SOL</span>
+                        <span className="text-xs text-emerald-700">≈ ${(userRewards * SOL_PRICE).toFixed(2)}</span>
                       </div>
                     </div>
                   </div>
@@ -447,30 +386,15 @@ export default function BackerPage() {
                     <button
                       onClick={handleClaimRewards}
                       disabled={isClaiming}
-                      className="btn-primary px-8 py-4 text-lg font-semibold whitespace-nowrap"
+                      className="btn-primary"
                     >
-                      {isClaiming ? (
-                        <span className="flex items-center justify-center space-x-2">
-                          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
-                          <span>Claiming...</span>
-                        </span>
-                      ) : (
-                        <span className="flex items-center space-x-2">
-                          <span>Claim Rewards</span>
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                          </svg>
-                        </span>
-                      )}
+                      {isClaiming ? 'CLAIMING...' : 'CLAIM REWARDS'}
                     </button>
                     <button
                       onClick={handleDebug}
-                      className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition"
+                      className="btn-ghost text-xs"
                     >
-                      🔍 Debug Info
+                      [DEBUG_INFO]
                     </button>
                   </div>
                 </div>
@@ -478,61 +402,53 @@ export default function BackerPage() {
             )}
 
             {/* Stake Form */}
-            <div className="card p-8">
+            <div className="card p-8 bg-[#151b28] border-slate-800">
               <div className="mb-8">
-                <h2 className="section-header">Become a Backer & Earn Rewards</h2>
-                <p className="section-subtitle">
-                  Stake your SOL to support program deployments and earn {isLoading ? '...' : `${currentApy.toFixed(2)}`}% APY
+                <h2 className="text-lg font-bold text-slate-200 font-mono mb-2">STAKE & EARN</h2>
+                <p className="text-sm text-slate-400 font-mono">
+                  Stake SOL to support deployments. Current APY: <span className="text-emerald-400">{isLoading ? '...' : `${currentApy.toFixed(2)}%`}</span>
                 </p>
               </div>
 
-              <form onSubmit={handleStake} className="space-y-6">
+              <form onSubmit={handleStake} className="space-y-6 max-w-xl">
                 <div>
-                  <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-2">
+                  <label htmlFor="amount" className="text-label block mb-2">
                     Amount to Stake
                   </label>
-                  <input
-                    type="number"
-                    id="amount"
-                    value={stakeAmount}
-                    onChange={(e) => setStakeAmount(e.target.value)}
-                    placeholder="0.00"
-                    step="0.01"
-                    min="0.1"
-                    className="input-field"
-                    disabled={isStaking}
-                  />
-                  <div className="mt-2 flex items-center justify-between text-sm">
-                    <span className="text-gray-500">Minimum: 0.1 SOL</span>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      id="amount"
+                      value={stakeAmount}
+                      onChange={(e) => setStakeAmount(e.target.value)}
+                      placeholder="0.00"
+                      step="0.01"
+                      min="0.1"
+                      className="input-field pr-16"
+                      disabled={isStaking}
+                    />
                     <button
                       type="button"
-                      className="text-[#0066FF] hover:text-[#0052CC] font-medium"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-emerald-400 hover:text-emerald-300 font-mono px-2 py-1"
                       onClick={() => setStakeAmount('1')}
                     >
-                      Max
+                      MAX
                     </button>
+                  </div>
+                  <div className="mt-2 text-xs text-slate-500 font-mono text-right">
+                    Min: 0.1 SOL
                   </div>
                 </div>
 
                 {stakeAmount && !isNaN(parseFloat(stakeAmount)) && parseFloat(stakeAmount) >= 0.1 && (
-                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-6 space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-700">Estimated Annual Rewards:</span>
-                      <span className="font-bold text-gray-900">
-                        {calculateEstimatedRewards().toFixed(4)} SOL
-                      </span>
+                  <div className="bg-slate-900 rounded p-4 border border-slate-800 space-y-2 font-mono text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Est. Annual Rewards</span>
+                      <span className="text-emerald-400">{calculateEstimatedRewards().toFixed(4)} SOL</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm text-gray-700">Monthly Rewards:</span>
-                      <span className="font-bold text-gray-900">
-                        {(calculateEstimatedRewards() / 12).toFixed(4)} SOL
-                      </span>
-                    </div>
-                    <div className="pt-3 border-t border-blue-200">
-                      <div className="flex justify-between items-center">
-                        <span className="text-sm text-gray-700">APY:</span>
-                        <span className="font-bold text-[#0066FF] text-xl">{isLoading ? '...' : `${currentApy.toFixed(2)}%`}</span>
-                      </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-500">Est. Monthly Rewards</span>
+                      <span className="text-emerald-400">{(calculateEstimatedRewards() / 12).toFixed(4)} SOL</span>
                     </div>
                   </div>
                 )}
@@ -542,38 +458,9 @@ export default function BackerPage() {
                   disabled={isStaking || !stakeAmount || parseFloat(stakeAmount) < 0.1}
                   className="btn-primary w-full"
                 >
-                  {isStaking ? (
-                    <span className="flex items-center justify-center space-x-2">
-                      <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
-                      <span>Staking...</span>
-                    </span>
-                  ) : (
-                    'Stake Now'
-                  )}
+                  {isStaking ? 'PROCESSING...' : 'STAKE SOL'}
                 </button>
               </form>
-
-              <div className="mt-8 pt-8 border-t border-gray-200">
-                <h3 className="font-semibold text-gray-900 mb-6">How It Works</h3>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  {[
-                    { num: '1', text: 'Stake your SOL to the treasury pool' },
-                    { num: '2', text: 'Your SOL is used to cover rent for developer deployments' },
-                    { num: '3', text: `Earn ${isLoading ? '...' : `${currentApy.toFixed(2)}`}% APY as developers pay service fees` },
-                    { num: '4', text: 'Unstake anytime with a 7-day cooldown period' }
-                  ].map((step, index) => (
-                    <div key={index} className="flex items-start space-x-3">
-                      <div className="w-8 h-8 bg-[#0066FF] text-white rounded-lg flex items-center justify-center flex-shrink-0 font-bold text-sm">
-                        {step.num}
-                      </div>
-                      <p className="text-sm text-gray-600 leading-relaxed pt-1">{step.text}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
             </div>
           </div>
         )}
