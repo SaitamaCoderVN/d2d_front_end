@@ -1,17 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { poolApi, LeaderboardEntry, LeaderboardResponse } from '@/lib/api';
+import { poolApi, LeaderboardEntry, LeaderboardResponse, pointsApi } from '@/lib/api';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@/components/WalletButton';
+import WalletWithPoints from '@/components/WalletWithPoints';
 import Link from 'next/link';
 import Image from 'next/image';
 import toast from 'react-hot-toast';
 
+interface LeaderboardWithPoints extends LeaderboardEntry {
+  points: number;
+}
+
 export default function LeaderboardPage() {
   const { publicKey } = useWallet();
-  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardWithPoints[]>([]);
   const [rewardPoolBalance, setRewardPoolBalance] = useState<number>(0);
   const [rewardPoolAddress, setRewardPoolAddress] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
@@ -21,7 +25,27 @@ export default function LeaderboardPage() {
     setIsLoading(true);
     try {
       const data: LeaderboardResponse = await poolApi.getLeaderboard();
-      setLeaderboard(data.leaderboard);
+      
+      // Fetch points for each wallet
+      const leaderboardWithPoints = await Promise.all(
+        data.leaderboard.map(async (entry) => {
+          try {
+            const pointsData = await pointsApi.getPoints(entry.wallet);
+            return {
+              ...entry,
+              points: pointsData.totalPoints,
+            };
+          } catch (error) {
+            // If points fetch fails, default to 0
+            return {
+              ...entry,
+              points: 0,
+            };
+          }
+        })
+      );
+      
+      setLeaderboard(leaderboardWithPoints);
       setRewardPoolBalance(data.rewardPoolBalance);
       setRewardPoolAddress(data.rewardPoolAddress);
       setLastUpdated(new Date());
@@ -94,7 +118,7 @@ export default function LeaderboardPage() {
               </Link>
             </nav>
             
-            <WalletMultiButton />
+            <WalletWithPoints />
           </div>
         </div>
       </header>
@@ -106,10 +130,10 @@ export default function LeaderboardPage() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-4xl font-bold text-gray-900 mb-2">
-                🏆 Rewards Leaderboard
+                🏆 Leaderboard
               </h1>
               <p className="text-gray-600">
-                Top backers ranked by claimable rewards
+                Top backers ranked by total rewards and points
               </p>
             </div>
             <button
@@ -153,7 +177,36 @@ export default function LeaderboardPage() {
           </div>
         ) : leaderboard.length === 0 ? (
           <div className="card p-8 text-center">
-            <p className="text-gray-600">No backers found</p>
+            <div className="max-w-md mx-auto">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No backers found</h3>
+              <p className="text-gray-600 mb-4">
+                No one has staked SOL into the pool yet.
+              </p>
+              {rewardPoolBalance > 0 && (
+                <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-sm text-blue-800">
+                    <strong>Note:</strong> The Reward Pool has {formatSOL(rewardPoolBalance)} SOL from developer fees, 
+                    but no backers have staked yet. Once backers start staking, they will be able to claim these rewards.
+                  </p>
+                </div>
+              )}
+              <div className="mt-6">
+                <a
+                  href="/backer"
+                  className="inline-flex items-center px-4 py-2 bg-[#0066FF] hover:bg-[#0052CC] text-white rounded-lg font-medium transition"
+                >
+                  Start Staking
+                  <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </a>
+              </div>
+            </div>
           </div>
         ) : (
           <div className="card p-0 overflow-hidden">
@@ -168,16 +221,10 @@ export default function LeaderboardPage() {
                       Wallet
                     </th>
                     <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Deposited
-                    </th>
-                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Claimable Rewards
-                    </th>
-                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                      Total Claimed
-                    </th>
-                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
                       Total Rewards
+                    </th>
+                    <th className="px-6 py-4 text-right text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                      Points
                     </th>
                   </tr>
                 </thead>
@@ -235,28 +282,27 @@ export default function LeaderboardPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <span className="text-sm font-medium text-gray-900">
-                            {formatSOL(entry.depositedAmount)} SOL
-                          </span>
+                          <div className="flex flex-col items-end">
+                            <span className="text-sm font-bold text-blue-600">
+                              {formatSOL(entry.claimableRewards + entry.claimedTotal)} SOL
+                            </span>
+                            <div className="text-xs text-gray-500 mt-1">
+                              Claimable + Claimed
+                            </div>
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <span className={`text-sm font-bold ${
-                            entry.claimableRewards > 0 ? 'text-green-600' : 'text-gray-500'
-                          }`}>
-                            {formatSOL(entry.claimableRewards)} SOL
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <span className="text-sm font-medium text-gray-600">
-                            {formatSOL(entry.claimedTotal)} SOL
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-right">
-                          <span className="text-sm font-bold text-blue-600">
-                            {formatSOL(entry.claimableRewards + entry.claimedTotal)} SOL
-                          </span>
-                          <div className="text-xs text-gray-500 mt-1">
-                            (Claimable + Claimed)
+                          <div className="flex items-center justify-end space-x-1.5">
+                            <svg
+                              className="w-4 h-4 text-purple-500"
+                              fill="currentColor"
+                              viewBox="0 0 20 20"
+                            >
+                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                            </svg>
+                            <span className="text-sm font-bold text-purple-600 tabular-nums">
+                              {entry.points.toFixed(3)}
+                            </span>
                           </div>
                         </td>
                       </tr>
@@ -299,18 +345,10 @@ export default function LeaderboardPage() {
                 <div className="text-2xl font-bold text-gray-900">{leaderboard.length}</div>
               </div>
               <div className="card p-6">
-                <div className="text-sm text-gray-600 mb-1">Total Claimable</div>
-                <div className="text-2xl font-bold text-green-600">
+                <div className="text-sm text-gray-600 mb-1">Total Rewards</div>
+                <div className="text-2xl font-bold text-blue-600">
                   {formatSOL(
-                    leaderboard.reduce((sum, entry) => sum + entry.claimableRewards, 0)
-                  )} SOL
-                </div>
-              </div>
-              <div className="card p-6">
-                <div className="text-sm text-gray-600 mb-1">Total Deposited</div>
-                <div className="text-2xl font-bold text-gray-900">
-                  {formatSOL(
-                    leaderboard.reduce((sum, entry) => sum + entry.depositedAmount, 0)
+                    leaderboard.reduce((sum, entry) => sum + entry.claimableRewards + entry.claimedTotal, 0)
                   )} SOL
                 </div>
               </div>

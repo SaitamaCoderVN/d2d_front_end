@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@/components/WalletButton';
+import WalletWithPoints from '@/components/WalletWithPoints';
 import DeploymentForm from '@/components/DeploymentForm';
 import DeploymentHistory from '@/components/DeploymentHistory';
+import UserStakeInfo from '@/components/UserStakeInfo';
 import Link from 'next/link';
 import Image from 'next/image';
 
@@ -109,7 +110,7 @@ export default function DeveloperPage() {
                 </Link>
               </nav>
             </div>
-            <WalletMultiButton />
+            <WalletWithPoints />
           </div>
         </div>
       </header>
@@ -128,10 +129,13 @@ export default function DeveloperPage() {
             <p className="text-body-large max-w-md mx-auto mb-8">
               Please connect your Solana wallet to start deploying programs to devnet.
             </p>
-            <WalletMultiButton />
+            <WalletWithPoints />
           </div>
         ) : (
           <div className="space-y-8">
+            {/* User Stake & Rewards Info */}
+            <UserStakeInfo />
+
             {/* Stats Overview */}
             <div className="grid-stats">
               {stats.map((stat, index) => (

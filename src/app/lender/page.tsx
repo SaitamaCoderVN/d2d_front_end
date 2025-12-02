@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@/components/WalletButton';
+import WalletWithPoints from '@/components/WalletWithPoints';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -133,7 +133,7 @@ export default function LenderPage() {
                 </Link>
               </nav>
             </div>
-            <WalletMultiButton />
+            <WalletWithPoints />
           </div>
         </div>
       </header>
@@ -152,7 +152,7 @@ export default function LenderPage() {
             <p className="text-gray-600 mb-8 max-w-md mx-auto">
               Please connect your Solana wallet to start staking and earning rewards.
             </p>
-            <WalletMultiButton />
+            <WalletWithPoints />
           </div>
         ) : (
           <div className="space-y-8">

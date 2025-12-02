@@ -2,7 +2,7 @@
 
 import { useRouter } from 'next/navigation';
 import { useWallet } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@/components/WalletButton';
+import WalletWithPoints from '@/components/WalletWithPoints';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -23,7 +23,7 @@ export default function Home() {
                 <p className="text-xs text-gray-500">Solana Program Deployment</p>
               </div>
             </Link>
-            <WalletMultiButton />
+            <WalletWithPoints />
           </div>
         </div>
       </header>

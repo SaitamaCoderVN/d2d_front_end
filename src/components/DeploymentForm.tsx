@@ -45,6 +45,9 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
   const programIdFromIdl = useMemo(() => new PublicKey(programIdl.address), [programIdl]);
   const accountsCoder = useMemo(() => new BorshAccountsCoder(idl as unknown as Idl), []);
 
+  // Derive treasury pool PDA (no hardcoding)
+  const treasuryPoolAddress = useMemo(() => getTreasuryPoolPda().toString(), []);
+
   useEffect(() => {
     if (!programIdFromIdl.equals(D2D_PROGRAM_ID)) {
       console.warn('⚠️  IDL address mismatch detected', {
@@ -183,19 +186,48 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
   };
 
   /**
-   * Check wallet balance and request airdrop if needed
+   * Check wallet balance and verify sufficient funds for payment
    */
-  const ensureSufficientBalance = async (): Promise<boolean> => {
+  const ensureSufficientBalance = async (paymentAmountLamports?: number): Promise<boolean> => {
     if (!publicKey) return false;
     
     try {
       console.log('💰 Checking wallet balance...');
       const balance = await connection.getBalance(publicKey);
-      console.log(`   Current balance: ${(balance / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
+      const balanceSOL = balance / LAMPORTS_PER_SOL;
+      console.log(`   Current balance: ${balanceSOL.toFixed(4)} SOL (${balance} lamports)`);
       
-      const requiredBalance = 0.5 * LAMPORTS_PER_SOL; // Require at least 0.5 SOL
-      
+      if (paymentAmountLamports) {
+        // Calculate total required: payment + transaction fees (estimate ~10k lamports per instruction)
+        const TRANSACTION_FEE_ESTIMATE = 20_000; // ~20k for 2 transfers
+        const totalRequired = paymentAmountLamports + TRANSACTION_FEE_ESTIMATE;
+        const totalRequiredSOL = totalRequired / LAMPORTS_PER_SOL;
+        
+        console.log(`   Payment amount: ${(paymentAmountLamports / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
+        console.log(`   Transaction fee estimate: ${(TRANSACTION_FEE_ESTIMATE / LAMPORTS_PER_SOL).toFixed(4)} SOL`);
+        console.log(`   Total required: ${totalRequiredSOL.toFixed(4)} SOL`);
+        
+        if (balance < totalRequired) {
+          const missing = (totalRequired - balance) / LAMPORTS_PER_SOL;
+          console.error(`   ❌ Insufficient balance! Missing: ${missing.toFixed(4)} SOL`);
+          toast.error(
+            `Insufficient SOL. Need ${totalRequiredSOL.toFixed(4)} SOL, have ${balanceSOL.toFixed(4)} SOL. Missing: ${missing.toFixed(4)} SOL`,
+            { duration: 10000 }
+          );
+          return false;
+        }
+        
+        console.log(`   ✅ Sufficient balance for payment`);
+      } else {
+        // Just check minimum balance
+        const requiredBalance = 0.5 * LAMPORTS_PER_SOL;
+        if (balance < requiredBalance) {
+          console.error(`   ❌ Balance too low. Need at least 0.5 SOL`);
+          return false;
+        }
       console.log('✅ Sufficient balance for deployment');
+      }
+      
       return true;
     } catch (error: any) {
       console.error('❌ Failed to check balance:', error);
@@ -293,28 +325,24 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
     setIsSimulationMode(false);
 
     try {
-      // Step 0: Ensure sufficient balance (with auto-airdrop)
+      // Calculate fee breakdown first
+      const monthlyFeeAmount = costBreakdown.monthlyFee * costBreakdown.initialMonths;
+      const platformFeeAmount = costBreakdown.deploymentPlatformFee;
+      const rewardFeeAmount = monthlyFeeAmount;
+      const remainingPayment = costBreakdown.serviceFee;
+      const totalRewardPoolPayment = rewardFeeAmount + remainingPayment;
+      const totalPaymentLamports = totalRewardPoolPayment + platformFeeAmount;
+
+      // Step 0: Ensure sufficient balance for payment
       console.log('📋 Step 0: Checking balance...');
-      const hasBalance = await ensureSufficientBalance();
+      const hasBalance = await ensureSufficientBalance(totalPaymentLamports);
       if (!hasBalance) {
-        throw new Error('Insufficient SOL on Devnet. Please get SOL from a faucet.');
+        throw new Error('Insufficient SOL for payment. Please get more SOL from a faucet.');
       }
 
       // Step 1: Create and send payment transaction
       console.log('📋 Step 1: Creating payment transaction...');
       toast.loading('Creating payment transaction...', { id: 'payment' });
-
-      // Calculate fee breakdown:
-      // - monthlyFee (1% of borrowed amount monthly) → RewardPool
-      // - platformFee (0.1% of borrowed amount monthly) → PlatformPool
-      // - serviceFee + deploymentPlatformFee → part of total payment
-      const monthlyFeeAmount = costBreakdown.monthlyFee * costBreakdown.initialMonths;
-      // Platform fee = 0.1% of monthly fee (or calculate separately based on borrowed amount)
-      // For now, use deploymentPlatformFee as platform fee
-      const platformFeeAmount = costBreakdown.deploymentPlatformFee;
-      const rewardFeeAmount = monthlyFeeAmount; // 1% monthly fee goes to RewardPool
-      const remainingPayment = costBreakdown.serviceFee; // Service fee also goes to RewardPool
-      const totalRewardPoolPayment = rewardFeeAmount + remainingPayment;
       
       const rewardPoolAddress = getRewardPoolPda();
       const platformPoolAddress = getPlatformPoolPda();
@@ -805,7 +833,7 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
               ) : availableForDeploy !== null ? (
                 <div>
                   <p className="text-2xl font-bold text-green-700">{availableForDeploy.toFixed(4)} SOL</p>
-                  <p className="text-xs text-gray-500 mt-1">Pool: D6h9mgXL5enPyiG2M1W7Jn9yjXh8md1fCAcP5zBJH6ma</p>
+                  <p className="text-xs text-gray-500 mt-1">Pool: {treasuryPoolAddress}</p>
                 </div>
               ) : (
                 <p className="text-sm text-gray-500">Unable to load</p>

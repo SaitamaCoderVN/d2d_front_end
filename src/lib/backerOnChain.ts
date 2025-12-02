@@ -6,6 +6,7 @@
 import { Connection, PublicKey } from '@solana/web3.js';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 import { fetchTreasuryPool, fetchStakeAccount } from './d2dProgramAnchor';
+import { getTreasuryPoolPda } from './d2dProgram';
 
 export interface OnChainBackerData {
   // Treasury Pool data
@@ -44,9 +45,9 @@ export const fetchBackerDataOnChain = async (
   }
 
   try {
-    // Use the exact treasury pool address
-    const TREASURY_POOL_ADDRESS = 'D6h9mgXL5enPyiG2M1W7Jn9yjXh8md1fCAcP5zBJH6ma';
-    const treasuryPoolPDA = new PublicKey(TREASURY_POOL_ADDRESS);
+    // Derive treasury pool PDA from seeds (no hardcoding)
+    const treasuryPoolPDA = getTreasuryPoolPda();
+    const TREASURY_POOL_ADDRESS = treasuryPoolPDA.toString();
     
     // Fetch Treasury Pool struct and account balance
     const treasuryResult = await fetchTreasuryPool(connection, wallet);
@@ -93,7 +94,7 @@ export const fetchBackerDataOnChain = async (
     
     // Convert to SOL
     const totalDeposited = totalDepositedLamports / LAMPORTS_PER_SOL;
-    // Use actual account balance (total SOL in account D6h9mgXL5enPyiG2M1W7Jn9yjXh8md1fCAcP5zBJH6ma)
+    // Use actual account balance (total SOL in treasury pool account)
     const liquidBalance = liquidBalanceSOL; // This is the total account balance
     const lockedBalance = Math.max(0, totalDeposited - availableBalanceSOL); // SOL locked in active deployments (if struct is available)
     const rewardPoolBalance = rewardPoolBalanceLamports / LAMPORTS_PER_SOL;

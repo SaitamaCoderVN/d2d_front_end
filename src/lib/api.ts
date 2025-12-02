@@ -143,6 +143,15 @@ export interface LeaderboardResponse {
   rewardPoolAddress: string; // Reward pool PDA address
 }
 
+export interface UserStakeInfo {
+  wallet: string;
+  depositedAmount: number; // lamports
+  claimableRewards: number; // lamports
+  claimedTotal: number; // lamports
+  isActive: boolean;
+  totalRewards: number; // lamports (claimable + claimed)
+}
+
 export const poolApi = {
   /**
    * Get current treasury pool state
@@ -158,6 +167,35 @@ export const poolApi = {
   getLeaderboard: async (): Promise<LeaderboardResponse> => {
     const response = await api.get<LeaderboardResponse>('/api/pool/leaderboard');
     return response.data;
+  },
+
+  /**
+   * Get user's stake and reward information
+   */
+  getUserStakeInfo: async (wallet: string): Promise<UserStakeInfo> => {
+    const response = await api.get<UserStakeInfo>(`/api/pool/user/${wallet}`);
+    return response.data;
+  },
+};
+
+export interface PointsInfo {
+  walletAddress: string;
+  totalPoints: number;
+  currentDeposit: number;
+  currentDepositSOL: number;
+  lastSyncTime?: string;
+}
+
+export const pointsApi = {
+  /**
+   * Get points for a wallet address
+   */
+  getPoints: async (walletAddress: string): Promise<PointsInfo> => {
+    const response = await api.get<{ success: boolean; data: PointsInfo }>(`/api/points/${walletAddress}`);
+    if (response.data.success) {
+      return response.data.data;
+    }
+    throw new Error(response.data.error || 'Failed to get points');
   },
 };
 

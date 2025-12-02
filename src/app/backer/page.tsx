@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { WalletMultiButton } from '@/components/WalletButton';
+import WalletWithPoints from '@/components/WalletWithPoints';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { LAMPORTS_PER_SOL } from '@solana/web3.js';
@@ -133,7 +133,31 @@ export default function BackerPage() {
 
       // Use Anchor client for better error handling
       toast.loading('Please approve stake transaction...', { id: 'stake' });
-      const signature = await stakeSolAnchor(connection, wallet, amountLamports, 0);
+      let signature: string;
+      try {
+        signature = await stakeSolAnchor(connection, wallet, amountLamports, 0);
+      } catch (stakeError: any) {
+        console.error('Staking error:', stakeError);
+        
+        // Handle AccountDiscriminatorMismatch - account exists but with old format
+        if (
+          stakeError?.message?.includes('AccountDiscriminatorMismatch') ||
+          stakeError?.code === 3002 ||
+          stakeError?.errorCode === 3002
+        ) {
+          toast.error(
+            'Account exists with old format. Please contact admin to migrate your account.',
+            { id: 'stake', duration: 10000 }
+          );
+          throw new Error(
+            'AccountDiscriminatorMismatch: Your stake account exists but has an old format. ' +
+            'This usually happens after a program update. Please contact support.'
+          );
+        }
+        
+        // Re-throw other errors
+        throw stakeError;
+      }
 
       toast.loading('Confirming transaction...', { id: 'stake' });
       await connection.confirmTransaction(signature, 'confirmed');
@@ -341,7 +365,7 @@ export default function BackerPage() {
               </Link>
               
               <nav className="hidden md:flex space-x-2">
-                <Link
+                <Link 
                   href="/leaderboard"
                   className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-[#0066FF] hover:bg-gray-100 rounded-lg transition"
                 >
@@ -361,7 +385,7 @@ export default function BackerPage() {
                 </Link>
               </nav>
             </div>
-            <WalletMultiButton />
+            <WalletWithPoints />
           </div>
         </div>
       </header>
@@ -380,7 +404,7 @@ export default function BackerPage() {
             <p className="text-body-large max-w-md mx-auto mb-8">
               Please connect your Solana wallet to start staking and earning rewards.
             </p>
-            <WalletMultiButton />
+            <WalletWithPoints />
           </div>
         ) : (
           <div className="space-y-8">
