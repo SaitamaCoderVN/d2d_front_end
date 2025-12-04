@@ -5,10 +5,14 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import WalletWithPoints from './WalletWithPoints';
+import { useUserMode } from '@/context/UserModeContext';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function Sidebar() {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { mode } = useUserMode();
+  const { theme, toggleTheme } = useTheme();
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -29,42 +33,78 @@ export default function Sidebar() {
 
   const navItems = [
     {
-      label: 'HOME',
-      href: '/',
-      icon: (
-        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
-        </svg>
-      )
-    },
-    {
-      label: 'DEVELOPER_CONSOLE',
+      label: 'DEPLOYMENT',
       href: '/developer',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
         </svg>
-      )
+      ),
+      visible: 'developer'
+    },
+    {
+      label: 'PROGRAMS',
+      href: '/developer/programs',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+        </svg>
+      ),
+      visible: 'developer'
     },
     {
       label: 'LIQUIDITY_POOL',
       href: '/backer',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
         </svg>
-      )
+      ),
+      visible: 'backer'
+    },
+    {
+      label: 'STAKE',
+      href: '/backer/stake',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+      ),
+      visible: 'backer'
+    },
+    {
+      label: 'REWARDS',
+      href: '/backer/rewards',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" />
+        </svg>
+      ),
+      visible: 'backer'
+    },
+    {
+      label: 'UN STAKE',
+      href: '/backer/unstake',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+        </svg>
+      ),
+      visible: 'backer'
     },
     {
       label: 'LEADERBOARD',
       href: '/leaderboard',
       icon: (
         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
         </svg>
-      )
+      ),
+      visible: 'backer'
     }
   ];
+
+  const filteredNavItems = navItems.filter(item => item.visible === 'all' || item.visible === mode);
 
   const SidebarContent = () => (
     <>
@@ -75,7 +115,7 @@ export default function Sidebar() {
             <Image src="/favicon.svg" alt="D2D" fill className="object-contain" />
           </div>
           <div className="flex flex-col">
-            <span className="font-mono font-bold text-lg text-slate-200 group-hover:text-emerald-400 transition-colors">D2D_PROTO</span>
+            <span className="font-mono font-bold text-lg text-slate-200 group-hover:text-blue-400 transition-colors">D2D</span>
             <span className="text-[10px] text-slate-500 font-mono uppercase tracking-wider">Devnet v0.1</span>
           </div>
         </Link>
@@ -85,47 +125,65 @@ export default function Sidebar() {
       <nav className="flex-1 py-8 px-4 space-y-2 overflow-y-auto">
         <div className="text-xs font-mono text-slate-500 px-4 mb-4 uppercase tracking-widest">Main Modules</div>
         
-        {navItems.map((item) => {
-          const isActive = pathname === item.href;
+        {filteredNavItems.map((item) => {
+          // For exact match or nested routes, but handle /developer specially
+          let isActive = pathname === item.href;
+          if (!isActive && pathname?.startsWith(item.href + '/')) {
+            // Only match nested routes if the href doesn't conflict with another route
+            // Special case: /developer should not match /developer/programs
+            if (item.href === '/developer' && pathname.startsWith('/developer/programs')) {
+              isActive = false;
+            } else {
+              isActive = true;
+            }
+          }
           return (
             <Link
               key={item.href}
               href={item.href}
               className={`flex items-center gap-3 px-4 py-3 rounded-md font-mono text-sm transition-all duration-200 group ${
                 isActive
-                  ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]'
+                  ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_rgba(59, 130, 246,0.1)]'
                   : 'text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 hover:translate-x-1'
               }`}
             >
-              <span className={`${isActive ? 'text-emerald-400' : 'text-slate-500 group-hover:text-slate-300'}`}>
+              <span className={`${isActive ? 'text-blue-400' : 'text-slate-500 group-hover:text-slate-300'}`}>
                 {item.icon}
               </span>
               <span className="tracking-wide">{item.label}</span>
               {isActive && (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-emerald-400 shadow-[0_0_5px_#34d399]" />
+                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400 shadow-[0_0_5px_#60a5fa]" />
               )}
             </Link>
           );
         })}
 
-        {/* System Status */}
-        <div className="mt-12 px-4">
-          <div className="text-xs font-mono text-slate-500 mb-4 uppercase tracking-widest">System Status</div>
-          <div className="bg-slate-900/50 rounded border border-slate-800 p-3 space-y-2">
-            <div className="flex items-center justify-between text-xs font-mono">
-              <span className="text-slate-400">NETWORK</span>
-              <span className="text-emerald-400">DEVNET</span>
-            </div>
-            <div className="flex items-center justify-between text-xs font-mono">
-              <span className="text-slate-400">UPTIME</span>
-              <span className="text-slate-200">99.9%</span>
-            </div>
-            <div className="h-1 w-full bg-slate-800 rounded-full overflow-hidden mt-2">
-              <div className="h-full bg-emerald-500 w-full animate-pulse"></div>
-            </div>
-          </div>
-        </div>
       </nav>
+
+      {/* Theme Toggle Button - Bottom Left */}
+      <div className="flex-shrink-0 p-4 border-t border-slate-800">
+        <button
+          onClick={toggleTheme}
+          className="w-full flex items-center gap-3 px-4 py-3 rounded-md font-mono text-sm text-slate-400 hover:bg-slate-800/50 hover:text-slate-200 transition-all duration-200"
+          aria-label="Toggle theme"
+        >
+          {theme === 'dark' ? (
+            <>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+              </svg>
+              <span>Dark Mode</span>
+            </>
+          ) : (
+            <>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              <span>Light Mode</span>
+            </>
+          )}
+        </button>
+      </div>
     </>
   );
 
@@ -137,9 +195,11 @@ export default function Sidebar() {
           <div className="relative w-6 h-6">
             <Image src="/favicon.svg" alt="D2D" fill className="object-contain" />
           </div>
-          <span className="font-mono font-bold text-slate-200">D2D_PROTO</span>
+          <span className="font-mono font-bold text-slate-200">D2D</span>
         </Link>
         
+        <div className="flex items-center gap-2">
+          <WalletWithPoints className="flex items-center space-x-2" />
         <button 
           onClick={() => setIsMobileMenuOpen(true)}
           className="p-2 text-slate-400 hover:text-white focus:outline-none"
@@ -149,10 +209,6 @@ export default function Sidebar() {
           </svg>
         </button>
       </div>
-
-      {/* Mobile Wallet Button - Top Right (Mobile Only) */}
-      <div className="md:hidden fixed top-[14px] right-14 z-50">
-        <WalletWithPoints className="flex items-center space-x-2 scale-75 origin-right" />
       </div>
 
       {/* Desktop Sidebar (Fixed) */}

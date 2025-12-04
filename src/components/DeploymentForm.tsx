@@ -740,20 +740,20 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
         {/* Treasury Pool Balance Card */}
         <div className="card p-4 bg-[#0f172a] border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-emerald-500/10 rounded-md flex items-center justify-center border border-emerald-500/20">
-              <svg className="w-5 h-5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="w-10 h-10 bg-blue-500/10 rounded-md flex items-center justify-center border border-blue-500/20">
+              <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div>
               <p className="text-label text-slate-400">Treasury Pool</p>
-              <p className="text-xs font-mono text-emerald-500">Available Liquidity</p>
+              <p className="text-xs font-mono text-blue-500">Available Liquidity</p>
             </div>
           </div>
           <div className="text-right">
             {isLoadingPool ? (
               <div className="flex items-center gap-2">
-                <svg className="animate-spin h-4 w-4 text-emerald-500" viewBox="0 0 24 24">
+                <svg className="animate-spin h-4 w-4 text-blue-500" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
@@ -761,7 +761,7 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
               </div>
             ) : availableForDeploy !== null ? (
               <div>
-                <p className="text-xl font-bold font-mono text-emerald-400">{availableForDeploy.toFixed(4)} SOL</p>
+                <p className="text-xl font-bold font-mono text-blue-400">{availableForDeploy.toFixed(4)} SOL</p>
                 <p className="text-[10px] font-mono text-slate-600">{treasuryPoolAddress.slice(0, 8)}...{treasuryPoolAddress.slice(-8)}</p>
               </div>
             ) : (
@@ -778,7 +778,7 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
               <div className="flex gap-1.5">
                 <div className="w-3 h-3 rounded-full bg-red-500/80 hover:bg-red-500 transition-colors"></div>
                 <div className="w-3 h-3 rounded-full bg-yellow-500/80 hover:bg-yellow-500 transition-colors"></div>
-                <div className="w-3 h-3 rounded-full bg-emerald-500/80 hover:bg-emerald-500 transition-colors"></div>
+                <div className="w-3 h-3 rounded-full bg-blue-500/80 hover:bg-blue-500 transition-colors"></div>
               </div>
               <span className="text-xs text-slate-400 font-medium ml-3 tracking-wider">D2D_DEPLOYER_CLI -- -bash</span>
             </div>
@@ -801,8 +801,8 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
                       <span className="text-slate-500 mr-2">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
                       {log.level === 'error' && <span className="text-red-500 font-bold">ERROR: </span>}
                       {log.level === 'warning' && <span className="text-yellow-500 font-bold">WARN: </span>}
-                      {log.level === 'success' && <span className="text-emerald-500 font-bold">SUCCESS: </span>}
-                      <span className={log.level === 'error' ? 'text-red-400' : log.level === 'success' ? 'text-emerald-400' : 'text-slate-300'}>
+                      {log.level === 'success' && <span className="text-blue-500 font-bold">SUCCESS: </span>}
+                      <span className={log.level === 'error' ? 'text-red-400' : log.level === 'success' ? 'text-blue-400' : 'text-slate-300'}>
                         {log.message}
                       </span>
                       {log.hash && (
@@ -818,7 +818,7 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
             {/* Active Input Line */}
             {phase === DeploymentPhase.INPUT ? (
                <div className="flex flex-wrap items-center gap-2 text-slate-200">
-                  <span className="text-emerald-500 font-bold whitespace-nowrap">user@d2d:~$</span>
+                  <span className="text-blue-500 font-bold whitespace-nowrap">user@d2d:~$</span>
                   <span className="text-blue-400 whitespace-nowrap">deploy --program-id</span>
                   <div className="flex-1 min-w-[200px] relative">
                     <input
@@ -844,7 +844,7 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
                // Processing State (Show active spinner line)
                <div className="mt-2 pb-2 border-t border-slate-800 pt-2">
                    <div className="flex items-center gap-2 text-slate-400 animate-pulse">
-                      <span className="text-emerald-500 font-bold">root@d2d-node:~/jobs$</span>
+                      <span className="text-blue-500 font-bold">root@d2d-node:~/jobs$</span>
                       <span>
                          {phase === DeploymentPhase.VERIFYING && 'verifying_program_integrity...'}
                          {phase === DeploymentPhase.CALCULATING && 'calculating_deployment_costs...'}
@@ -860,14 +860,14 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
 
             {/* Confirmation Area (Phase: READY) */}
             {phase === DeploymentPhase.READY && costBreakdown && (
-               <div className="mt-4 mb-2 p-3 border border-emerald-500/30 rounded bg-emerald-900/10">
-                  <div className="text-emerald-400 font-bold mb-2">CONFIRMATION_REQUIRED</div>
+               <div className="mt-4 mb-2 p-3 border border-blue-500/30 rounded bg-blue-900/10">
+                  <div className="text-blue-400 font-bold mb-2">CONFIRMATION_REQUIRED</div>
                   <p className="text-slate-300 mb-1">Program Size: <span className="text-white">{(costBreakdown.programSize / 1024).toFixed(2)} KB</span></p>
                   <p className="text-slate-300 mb-1">Total Cost: <span className="text-white">{costBreakdown.totalPaymentSOL.toFixed(4)} SOL</span></p>
                   <div className="flex items-center gap-4 mt-4">
                      <button 
                         onClick={handleDeployment}
-                        className="px-4 py-1 bg-emerald-500 text-black font-bold hover:bg-emerald-400"
+                        className="px-4 py-1 bg-blue-500 text-black font-bold hover:bg-blue-400"
                      >
                         [Y] CONFIRM
                      </button>

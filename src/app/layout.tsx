@@ -3,7 +3,9 @@ import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { WalletProvider } from '@/components/WalletProvider';
 import { Toaster } from 'react-hot-toast';
-import Sidebar from '@/components/Sidebar';
+import { UserModeProvider } from '@/context/UserModeContext';
+import { ThemeProvider } from '@/context/ThemeContext';
+import ClientLayout from '@/components/ClientLayout';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
@@ -23,15 +25,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning className="dark">
-      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans bg-[#0B0E14] text-slate-200 antialiased selection:bg-emerald-500/30`} suppressHydrationWarning>
-        <WalletProvider>
-          <div className="flex min-h-screen bg-[#0B0E14]">
-            <Sidebar />
-            <main className="flex-1 md:ml-64 min-h-screen bg-[#0B0E14] transition-all duration-200 flex flex-col">
-              {children}
-            </main>
-          </div>
-        </WalletProvider>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans bg-[#0B0E14] text-slate-200 antialiased selection:bg-blue-500/30`} suppressHydrationWarning>
+        <ThemeProvider>
+          <UserModeProvider>
+            <WalletProvider>
+              <ClientLayout>
+                {children}
+              </ClientLayout>
+            </WalletProvider>
+          </UserModeProvider>
+        </ThemeProvider>
         <Toaster
           position="bottom-right"
           toastOptions={{
@@ -44,7 +47,7 @@ export default function RootLayout({
             },
             success: {
               iconTheme: {
-                primary: '#10b981',
+                primary: '#3b82f6',
                 secondary: '#fff',
               },
             },
@@ -60,4 +63,3 @@ export default function RootLayout({
     </html>
   );
 }
-

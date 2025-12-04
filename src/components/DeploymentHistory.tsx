@@ -157,7 +157,7 @@ export default function DeploymentHistory({
       },
       [DeploymentStatus.SUCCESS]: {
         label: 'Success',
-        badgeClass: 'badge-emerald',
+        badgeClass: 'badge-blue',
         icon: '✅'
       },
       [DeploymentStatus.FAILED]: {
@@ -245,7 +245,7 @@ export default function DeploymentHistory({
     return (
       <div className="card p-8 border-slate-800 bg-black/20">
         <h2 className="text-lg font-bold text-slate-200 font-mono mb-6 flex items-center gap-2">
-          <span className="text-emerald-500">&gt;</span> DEPLOYMENT_HISTORY
+          <span className="text-blue-500">&gt;</span> DEPLOYMENT_HISTORY
         </h2>
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
@@ -260,11 +260,11 @@ export default function DeploymentHistory({
     <div className="card p-8 border-slate-800 bg-black/20">
       <div className="flex items-center justify-between mb-8">
         <h2 className="text-lg font-bold text-slate-200 font-mono flex items-center gap-2">
-          <span className="text-emerald-500">&gt;</span> DEPLOYMENT_HISTORY
+          <span className="text-blue-500">&gt;</span> DEPLOYMENT_HISTORY
         </h2>
         <button
           onClick={fetchDeployments}
-          className="p-2 rounded-md hover:bg-slate-800 transition text-slate-400 hover:text-emerald-400"
+          className="p-2 rounded-md hover:bg-slate-800 transition text-slate-400 hover:text-blue-400"
           title="Refresh"
         >
           <svg
@@ -310,7 +310,7 @@ export default function DeploymentHistory({
             return (
               <div
                 key={deployment._id || deployment.id}
-                className="border border-slate-800 bg-slate-900/30 rounded-md p-4 md:p-6 hover:border-emerald-500/30 transition group overflow-hidden"
+                className="border border-slate-800 bg-slate-900/30 rounded-md p-4 md:p-6 hover:border-blue-500/30 transition group overflow-hidden"
               >
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-4">
                   <div className="flex-1 min-w-0"> {/* min-w-0 allows flex children to shrink */}
@@ -335,7 +335,7 @@ export default function DeploymentHistory({
                                 href={`https://explorer.solana.com/address/${devnetProgramId}?cluster=devnet`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-emerald-400 hover:text-emerald-300 hover:underline flex items-center gap-1 transition-colors"
+                                className="text-blue-400 hover:text-blue-300 hover:underline flex items-center gap-1 transition-colors"
                               >
                                 <span className="truncate">{devnetProgramId}</span>
                                 <svg className="w-3 h-3 shrink-0 opacity-50 group-hover:opacity-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -413,15 +413,15 @@ export default function DeploymentHistory({
                           ].map((step, idx) => (
                             <div key={idx} className="flex items-center space-x-3">
                               <div className={`w-5 h-5 rounded flex items-center justify-center text-xs border shrink-0 ${
-                                step.status === 'completed' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400' :
-                                step.status === 'active' ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-400 animate-pulse' :
+                                step.status === 'completed' ? 'bg-blue-500/10 border-blue-500/30 text-blue-400' :
+                                step.status === 'active' ? 'bg-blue-500/10 border-blue-500/30 text-blue-400 animate-pulse' :
                                 'bg-slate-800 border-slate-700 text-slate-500'
                               }`}>
                                 {step.status === 'completed' ? '✓' : (idx + 1)}
                               </div>
                               <span className={`text-xs font-mono ${
-                                step.status === 'completed' ? 'text-emerald-400' :
-                                step.status === 'active' ? 'text-emerald-400' :
+                                step.status === 'completed' ? 'text-blue-400' :
+                                step.status === 'active' ? 'text-blue-400' :
                                 'text-slate-500'
                               }`}>
                                 {step.label}
@@ -436,7 +436,7 @@ export default function DeploymentHistory({
                   <div className="flex items-center justify-end gap-2 md:ml-4 shrink-0">
                     {isActive && (
                       <div className="w-8 h-8 bg-slate-800 rounded flex items-center justify-center border border-slate-700">
-                        <svg className="animate-spin h-4 w-4 text-emerald-400" viewBox="0 0 24 24">
+                        <svg className="animate-spin h-4 w-4 text-blue-400" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                         </svg>
@@ -480,7 +480,7 @@ export default function DeploymentHistory({
                         href={`https://explorer.solana.com/tx/${deployment.paymentSignature || deployment.payment_signature}?cluster=devnet`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center space-x-1.5 text-[10px] text-slate-400 hover:text-emerald-400 font-mono bg-slate-800/50 px-2 py-1 rounded border border-slate-700 hover:border-emerald-500/30 transition-colors"
+                        className="inline-flex items-center space-x-1.5 text-[10px] text-slate-400 hover:text-blue-400 font-mono bg-slate-800/50 px-2 py-1 rounded border border-slate-700 hover:border-blue-500/30 transition-colors"
                       >
                         <span>PAYMENT</span>
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -493,7 +493,7 @@ export default function DeploymentHistory({
                         href={`https://explorer.solana.com/tx/${deployment.on_chain_deploy_tx}?cluster=devnet`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center space-x-1.5 text-[10px] text-slate-400 hover:text-emerald-400 font-mono bg-slate-800/50 px-2 py-1 rounded border border-slate-700 hover:border-emerald-500/30 transition-colors"
+                        className="inline-flex items-center space-x-1.5 text-[10px] text-slate-400 hover:text-blue-400 font-mono bg-slate-800/50 px-2 py-1 rounded border border-slate-700 hover:border-blue-500/30 transition-colors"
                       >
                         <span>REQUEST_TX</span>
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -506,7 +506,7 @@ export default function DeploymentHistory({
                         href={`https://explorer.solana.com/tx/${deployment.transactionSignature || deployment.transaction_signature}?cluster=devnet`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center space-x-1.5 text-[10px] text-emerald-400 hover:text-emerald-300 font-mono bg-emerald-900/10 px-2 py-1 rounded border border-emerald-500/20 transition-colors"
+                        className="inline-flex items-center space-x-1.5 text-[10px] text-blue-400 hover:text-blue-300 font-mono bg-blue-900/10 px-2 py-1 rounded border border-blue-500/20 transition-colors"
                       >
                         <span>DEPLOY_TX</span>
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -519,7 +519,7 @@ export default function DeploymentHistory({
                         href={`https://explorer.solana.com/tx/${deployment.on_chain_confirm_tx}?cluster=devnet`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center space-x-1.5 text-[10px] text-emerald-400 hover:text-emerald-300 font-mono bg-emerald-900/10 px-2 py-1 rounded border border-emerald-500/20 transition-colors"
+                        className="inline-flex items-center space-x-1.5 text-[10px] text-blue-400 hover:text-blue-300 font-mono bg-blue-900/10 px-2 py-1 rounded border border-blue-500/20 transition-colors"
                       >
                         <span>CONFIRM_TX</span>
                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">

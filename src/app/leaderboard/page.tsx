@@ -88,7 +88,7 @@ export default function LeaderboardPage() {
         <div className="mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold text-slate-200 font-mono flex items-center gap-3">
-              <span className="text-emerald-500">&gt;</span> LEADERBOARD
+              <span className="text-blue-500">&gt;</span> LEADERBOARD
             </h1>
             <p className="text-slate-500 mt-1 font-mono text-sm">Top backers ranked by performance</p>
           </div>
@@ -114,18 +114,18 @@ export default function LeaderboardPage() {
 
         {/* Summary Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="card p-6 bg-gradient-to-br from-emerald-900/20 to-black border-emerald-500/30 relative overflow-hidden group">
+          <div className="card p-6 bg-gradient-to-br from-blue-900/20 to-black border-blue-500/30 relative overflow-hidden group">
             <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition">
-              <svg className="w-24 h-24 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+              <svg className="w-24 h-24 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div className="relative z-10">
-              <div className="text-xs font-mono text-emerald-400 uppercase mb-2 tracking-wider">Reward Pool Balance</div>
+              <div className="text-xs font-mono text-blue-400 uppercase mb-2 tracking-wider">Reward Pool Balance</div>
               <div className="text-3xl font-bold text-white font-mono mb-1">
-                {isLoading ? '...' : formatSOL(rewardPoolBalance)} <span className="text-lg text-emerald-500">SOL</span>
+                {isLoading ? '...' : formatSOL(rewardPoolBalance)} <span className="text-lg text-blue-500">SOL</span>
               </div>
-              <div className="text-[10px] font-mono text-emerald-500/50 truncate">
+              <div className="text-[10px] font-mono text-blue-500/50 truncate">
                 ADDR: {rewardPoolAddress || 'LOADING...'}
               </div>
             </div>
@@ -165,7 +165,7 @@ export default function LeaderboardPage() {
                   <tr>
                     <td colSpan={4} className="px-6 py-12 text-center">
                       <div className="flex flex-col items-center justify-center">
-                        <svg className="animate-spin h-8 w-8 text-emerald-500 mb-4" viewBox="0 0 24 24">
+                        <svg className="animate-spin h-8 w-8 text-blue-500 mb-4" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                         </svg>
@@ -193,19 +193,19 @@ export default function LeaderboardPage() {
                     return (
                       <tr 
                         key={entry.wallet} 
-                        className={`group transition-colors hover:bg-white/5 ${isUser ? 'bg-emerald-900/10 border-l-2 border-emerald-500' : ''}`}
+                        className={`group transition-colors hover:bg-white/5 ${isUser ? 'bg-blue-900/10 border-l-2 border-blue-500' : ''}`}
                       >
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-3">
                             {getRankIcon(rank)}
                             {isUser && (
-                              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500 text-black">YOU</span>
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-bold bg-blue-500 text-black">YOU</span>
                             )}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
-                            <span className={`font-mono text-sm ${isUser ? 'text-emerald-400' : 'text-slate-300'}`}>
+                            <span className={`font-mono text-sm ${isUser ? 'text-blue-400' : 'text-slate-300'}`}>
                               {formatWallet(entry.wallet)}
                             </span>
                             <button
@@ -223,7 +223,7 @@ export default function LeaderboardPage() {
                               href={`https://explorer.solana.com/address/${entry.wallet}?cluster=devnet`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="opacity-0 group-hover:opacity-100 transition text-slate-500 hover:text-emerald-400"
+                              className="opacity-0 group-hover:opacity-100 transition text-slate-500 hover:text-blue-400"
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />

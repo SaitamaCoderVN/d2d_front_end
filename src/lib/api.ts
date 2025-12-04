@@ -152,12 +152,26 @@ export interface UserStakeInfo {
   totalRewards: number; // lamports (claimable + claimed)
 }
 
+export interface UtilizationData {
+  history: Array<{ date: string; solUsed: number; deploymentCount: number }>;
+  currentUtilizationRate: number;
+  projectedApy: number;
+}
+
 export const poolApi = {
   /**
    * Get current treasury pool state
    */
   getPoolState: async (): Promise<PoolState> => {
     const response = await api.get<PoolState>('/api/pool/state');
+    return response.data;
+  },
+
+  /**
+   * Get pool utilization history and projected APY
+   */
+  getUtilization: async (): Promise<UtilizationData> => {
+    const response = await api.get<UtilizationData>('/api/pool/utilization');
     return response.data;
   },
 

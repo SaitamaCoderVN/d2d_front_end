@@ -9,18 +9,23 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@coral-xyz/anchor": "^0.31.1",
+    "@lazorkit/wallet": "^1.7.8",
     "@solana/wallet-adapter-base": "^0.9.23",
     "@solana/wallet-adapter-react": "^0.15.35",
     "@solana/wallet-adapter-react-ui": "^0.9.35",
     "@solana/wallet-adapter-wallets": "^0.19.32",
     "@solana/web3.js": "^1.87.6",
-    "@coral-xyz/anchor": "^0.31.1",
     "@supabase/supabase-js": "^2.79.0",
     "axios": "^1.6.2",
+    "bs58": "^6.0.0",
+    "buffer": "^6.0.3",
     "next": "14.0.4",
+    "process": "^0.11.10",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "react-hot-toast": "^2.4.1"
+    "react-hot-toast": "^2.4.1",
+    "recharts": "^3.5.1"
   },
   "devDependencies": {
     "@types/node": "^20.10.6",

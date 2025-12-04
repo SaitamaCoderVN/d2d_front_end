@@ -22,20 +22,20 @@ const config: Config = {
           950: '#020617',
         },
         // Accent Colors
-        emerald: {
-          400: '#34d399', // Neon Green Text
-          500: '#10b981', // Neon Green Border/Bg
-          900: '#064e3b', // Deep Green Glow
+        blue: {
+          400: '#60a5fa', // Neon Blue Text
+          500: '#3b82f6', // Neon Blue Border/Bg
+          900: '#1e3a8a', // Deep Blue Glow
         },
         // Solana Brand Colors
         solana: {
           purple: '#9945FF',
-          green: '#14F195',
+          blue: '#3b82f6',
         },
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'solana-gradient': 'linear-gradient(to right, #9945FF, #14F195)',
+        'solana-gradient': 'linear-gradient(to right, #9945FF, #3b82f6)',
       },
       animation: {
         'spin-slow': 'spin 3s linear infinite',

@@ -2,9 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useWallet } from '@solana/wallet-adapter-react';
-import WalletWithPoints from '@/components/WalletWithPoints';
 import DeploymentForm from '@/components/DeploymentForm';
-import DeploymentHistory from '@/components/DeploymentHistory';
 import UserStakeInfo from '@/components/UserStakeInfo';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -85,33 +83,14 @@ export default function DeveloperPage() {
 
   return (
     <div className="min-h-screen bg-[#0B0E14] flex flex-col">
-      {/* Top Header Bar - Persistent */}
-      <header className="h-16 border-b border-slate-800 bg-[#0B0E14]/80 backdrop-blur-sm flex items-center justify-between px-8 sticky top-0 z-40">
-        {/* Breadcrumbs / Page Title */}
-        <div className="flex items-center gap-4">
-          <h1 className="text-lg font-bold text-slate-200 font-mono flex items-center gap-2">
-            <span className="text-emerald-500">/</span> DEVELOPER_CONSOLE
-          </h1>
-          <div className="hidden md:flex items-center gap-2 bg-emerald-500/5 px-2 py-1 rounded border border-emerald-500/10">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <span className="text-[10px] font-mono text-emerald-500 tracking-wide">SYSTEM_ONLINE</span>
-          </div>
-        </div>
-
-        {/* Wallet Action */}
-        <div>
-          <WalletWithPoints />
-        </div>
-      </header>
-      
       <main className="flex-1 w-full max-w-[1920px] mx-auto">
         {/* Page Title Block Removed as it's now in Header */}
 
         {!connected ? (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center py-32">
-              <div className="w-24 h-24 bg-slate-800/50 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-emerald-900/20 border border-slate-700">
-                <svg className="w-12 h-12 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div className="w-24 h-24 bg-slate-800/50 rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-blue-900/20 border border-slate-700">
+                <svg className="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               </div>
@@ -119,11 +98,8 @@ export default function DeveloperPage() {
                 ACCESS_DENIED
               </h2>
               <p className="text-slate-400 max-w-md mx-auto mb-8 font-mono text-sm">
-                // Connect wallet to initialize developer console session.
+                // Connect wallet in the header to initialize developer console session.
               </p>
-              <div className="inline-block">
-                <WalletWithPoints />
-              </div>
             </div>
           </div>
         ) : (
@@ -131,10 +107,10 @@ export default function DeveloperPage() {
             {/* 1. HUD METRICS: Stats Overview (Horizontal Strip) - MOVED TO TOP */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4 w-full">
               {stats.map((stat, index) => (
-                <div key={index} className="bg-[#111620] p-4 rounded border border-slate-800/60 hover:border-emerald-500/30 transition-colors group">
+                <div key={index} className="bg-[#111620] p-4 rounded border border-slate-800/60 hover:border-blue-500/30 transition-colors group">
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-[10px] font-mono text-slate-500 uppercase tracking-wider">{stat.label}</span>
-                    <div className="text-emerald-500/50 group-hover:text-emerald-500 transition-colors scale-75 origin-right">
+                    <div className="text-blue-500/50 group-hover:text-blue-500 transition-colors scale-75 origin-right">
                       {stat.icon}
                     </div>
                   </div>
@@ -149,23 +125,9 @@ export default function DeveloperPage() {
               <DeploymentForm onDeploymentCreated={handleDeploymentCreated} />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
-              {/* 3. HISTORY (Main Content) - 8/12 cols */}
-              <div className="lg:col-span-8">
-                {publicKey && (
-                  <DeploymentHistory
-                    userWalletAddress={publicKey.toString()}
-                    refreshTrigger={refreshTrigger}
-                  />
-                )}
-              </div>
-
-              {/* 4. SECONDARY INFO: Stake Info (Sidebar Widget) - 4/12 cols */}
-              <div className="lg:col-span-4">
-                <div className="sticky top-8">
-                  <UserStakeInfo />
-                </div>
-              </div>
+            {/* Secondary Info: Stake Info */}
+            <div className="max-w-md mx-auto lg:mx-0">
+              <UserStakeInfo />
             </div>
           </div>
         )}

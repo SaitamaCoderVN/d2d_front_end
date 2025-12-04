@@ -104,6 +104,46 @@ export const stakeSolAnchor = async (
 };
 
 /**
+ * Unstake SOL using Anchor client
+ */
+export const unstakeSolAnchor = async (
+  connection: Connection,
+  wallet: WalletContextState,
+  amountLamports: number,
+): Promise<string> => {
+  if (!wallet.publicKey) {
+    throw new Error('Wallet not connected');
+  }
+
+  const provider = createProvider(connection, wallet);
+  const program = getProgram(provider);
+
+  const treasuryPoolPda = getTreasuryPoolPda();
+  const lenderStakePda = getBackerDepositPda(wallet.publicKey);
+
+  console.log('[Anchor] Unstaking SOL:', {
+    amount: amountLamports / 1e9,
+    treasuryPool: treasuryPoolPda.toString(),
+    lenderStake: lenderStakePda.toString(),
+    lender: wallet.publicKey.toString(),
+  });
+
+  const tx = await program.methods
+    .unstakeSol(new BN(amountLamports))
+    .accountsPartial({
+      treasuryPool: treasuryPoolPda,
+      treasuryPda: treasuryPoolPda,
+      lenderStake: lenderStakePda,
+      lender: wallet.publicKey,
+      systemProgram: SystemProgram.programId,
+    })
+    .rpc();
+
+  console.log('[Anchor] Unstake transaction:', tx);
+  return tx;
+};
+
+/**
  * Claim rewards using Anchor client
  */
 export const claimRewardsAnchor = async (
@@ -293,4 +333,3 @@ export const fetchTreasuryPool = async (
     };
   }
 };
-

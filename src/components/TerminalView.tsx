@@ -42,7 +42,7 @@ export default function TerminalView({
 
   const getLevelColor = (level: LogEntry['level']) => {
     switch (level) {
-      case 'success': return 'text-emerald-400';
+      case 'success': return 'text-blue-400';
       case 'warning': return 'text-yellow-400';
       case 'error': return 'text-red-400';
       default: return 'text-slate-300';
@@ -61,7 +61,7 @@ export default function TerminalView({
   };
 
   return (
-    <div className={`border border-slate-800 bg-black rounded-md font-mono text-sm flex flex-col shadow-2xl shadow-emerald-900/5 overflow-hidden transition-all duration-300 ${isCollapsed ? 'h-10' : height} ${className}`}>
+    <div className={`border border-slate-800 bg-black rounded-md font-mono text-sm flex flex-col shadow-2xl shadow-blue-900/5 overflow-hidden transition-all duration-300 ${isCollapsed ? 'h-10' : height} ${className}`}>
       {/* Window Header */}
       <div 
         className="flex items-center justify-between border-b border-slate-800 px-4 py-2 bg-[#0f172a] cursor-pointer hover:bg-[#1e293b] transition-colors select-none"
@@ -71,7 +71,7 @@ export default function TerminalView({
           <div className="flex gap-1.5">
             <div className="w-2.5 h-2.5 rounded-full bg-red-500/20 border border-red-500/50"></div>
             <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/20 border border-yellow-500/50"></div>
-            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/20 border border-emerald-500/50"></div>
+            <div className="w-2.5 h-2.5 rounded-full bg-blue-500/20 border border-blue-500/50"></div>
           </div>
           <span className="text-xs text-slate-500 font-medium ml-2 tracking-wider uppercase flex items-center gap-2">
             {title}
@@ -93,7 +93,7 @@ export default function TerminalView({
             }}
             className={`text-[10px] px-2 py-0.5 rounded border transition-all ${
               autoScroll 
-                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' 
+                ? 'bg-blue-500/10 text-blue-400 border-blue-500/30' 
                 : 'bg-slate-800 text-slate-400 border-slate-700'
             }`}
           >
@@ -142,9 +142,9 @@ export default function TerminalView({
         )}
         
         {/* Blinking Cursor */}
-        <div className="mt-2 flex items-center text-emerald-500" ref={bottomRef}>
+        <div className="mt-2 flex items-center text-blue-500" ref={bottomRef}>
           <span className="mr-2 text-slate-500">$</span>
-          <span className="animate-pulse bg-emerald-500 w-2 h-4 inline-block align-middle"></span>
+          <span className="animate-pulse bg-blue-500 w-2 h-4 inline-block align-middle"></span>
         </div>
       </div>
     </div>

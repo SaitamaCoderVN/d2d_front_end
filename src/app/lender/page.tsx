@@ -101,18 +101,18 @@ export default function LenderPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white via-emerald-50 to-green-100">
+    <div className="min-h-screen bg-gradient-to-br from-white via-blue-50 to-blue-100">
       {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-emerald-100">
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-blue-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-6">
               <Link href="/" className="flex items-center space-x-3 hover:opacity-80 transition">
-                <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
                   <Image src="/favicon.svg" alt="Decentralize Deployment" width={40} height={40} />
                 </div>
                 <div>
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-blue-600 bg-clip-text text-transparent">
                     Lender Dashboard
                   </h1>
                 </div>
@@ -121,13 +121,13 @@ export default function LenderPage() {
               <nav className="hidden md:flex space-x-1">
                 <Link 
                   href="/developer"
-                  className="px-4 py-2 rounded-lg text-gray-600 hover:bg-emerald-50 transition font-medium text-sm"
+                  className="px-4 py-2 rounded-lg text-gray-600 hover:bg-blue-50 transition font-medium text-sm"
                 >
                   Deploy
                 </Link>
                 <Link 
                   href="/lender"
-                  className="px-4 py-2 rounded-lg bg-emerald-100 text-emerald-700 font-medium text-sm"
+                  className="px-4 py-2 rounded-lg bg-blue-100 text-blue-700 font-medium text-sm"
                 >
                   Stake & Earn
                 </Link>
@@ -141,7 +141,7 @@ export default function LenderPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {!connected ? (
           <div className="text-center py-20">
-            <div className="w-20 h-20 bg-gradient-to-br from-green-400 to-emerald-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl">
+            <div className="w-20 h-20 bg-gradient-to-br from-blue-400 to-blue-600 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl">
               <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
@@ -158,25 +158,25 @@ export default function LenderPage() {
           <div className="space-y-8">
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              <div className="bg-white rounded-2xl p-6 shadow-lg border border-emerald-100">
+              <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-600">Your Stake</span>
-                  <div className="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 20 20">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
                       <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
                     </svg>
                   </div>
                 </div>
                 <div className="text-3xl font-bold text-gray-900">{userStake.toFixed(2)} SOL</div>
-                <div className="text-xs text-green-600 mt-1">≈ ${(userStake * 200).toFixed(2)}</div>
+                <div className="text-xs text-blue-600 mt-1">≈ ${(userStake * 200).toFixed(2)}</div>
               </div>
 
-              <div className="bg-white rounded-2xl p-6 shadow-lg border border-emerald-100">
+              <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-600">APY</span>
-                  <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                    <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                  <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg className="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
                       <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
                     </svg>
                   </div>
@@ -185,7 +185,7 @@ export default function LenderPage() {
                 <div className="text-xs text-gray-500 mt-1">Current rate</div>
               </div>
 
-              <div className="bg-white rounded-2xl p-6 shadow-lg border border-emerald-100">
+              <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-600">Rewards Earned</span>
                   <div className="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
@@ -199,7 +199,7 @@ export default function LenderPage() {
                 <div className="text-xs text-gray-500 mt-1">Claimable soon</div>
               </div>
 
-              <div className="bg-white rounded-2xl p-6 shadow-lg border border-emerald-100">
+              <div className="bg-white rounded-2xl p-6 shadow-lg border border-blue-100">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-600">Total Pool</span>
                   <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -214,7 +214,7 @@ export default function LenderPage() {
             </div>
 
             {/* Stake Form */}
-            <div className="bg-white rounded-2xl shadow-xl p-8 border border-emerald-100">
+            <div className="bg-white rounded-2xl shadow-xl p-8 border border-blue-100">
               <div className="mb-6">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">
                   Stake SOL & Earn Rewards
@@ -238,7 +238,7 @@ export default function LenderPage() {
                       placeholder="0.00"
                       step="0.01"
                       min="0.1"
-                      className="w-full px-4 py-4 pr-16 text-lg border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 transition"
+                      className="w-full px-4 py-4 pr-16 text-lg border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition"
                       disabled={isStaking}
                     />
                     <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-semibold">
@@ -249,7 +249,7 @@ export default function LenderPage() {
                     <span className="text-gray-500">Minimum: 0.1 SOL</span>
                     <button
                       type="button"
-                      className="text-emerald-600 hover:text-emerald-700 font-medium"
+                      className="text-blue-600 hover:text-blue-700 font-medium"
                       onClick={() => setStakeAmount('1')}
                     >
                       Max
@@ -258,16 +258,16 @@ export default function LenderPage() {
                 </div>
 
                 {stakeAmount && !isNaN(parseFloat(stakeAmount)) && (
-                  <div className="bg-emerald-50 rounded-xl p-4 space-y-2">
+                  <div className="bg-blue-50 rounded-xl p-4 space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Estimated Annual Rewards:</span>
-                      <span className="font-semibold text-emerald-700">
+                      <span className="font-semibold text-blue-700">
                         {calculateEstimatedRewards().toFixed(4)} SOL
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Monthly Rewards:</span>
-                      <span className="font-semibold text-emerald-700">
+                      <span className="font-semibold text-blue-700">
                         {(calculateEstimatedRewards() / 12).toFixed(4)} SOL
                       </span>
                     </div>
@@ -280,7 +280,7 @@ export default function LenderPage() {
                   className={`w-full py-4 rounded-xl font-semibold text-white transition-all duration-200 ${
                     isStaking || !stakeAmount || parseFloat(stakeAmount) < 0.1
                       ? 'bg-gray-300 cursor-not-allowed'
-                      : 'bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
+                      : 'bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5'
                   }`}
                 >
                   {isStaking ? (
@@ -301,32 +301,32 @@ export default function LenderPage() {
                 <h3 className="font-semibold text-gray-900 mb-4">How It Works</h3>
                 <div className="space-y-3">
                   <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-xs font-bold text-emerald-600">1</span>
+                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-blue-600">1</span>
                     </div>
                     <p className="text-sm text-gray-600">
                       Stake your SOL to the treasury pool
                     </p>
                   </div>
                   <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-xs font-bold text-emerald-600">2</span>
+                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-blue-600">2</span>
                     </div>
                     <p className="text-sm text-gray-600">
                       Your SOL is used to cover rent for developer deployments
                     </p>
                   </div>
                   <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-xs font-bold text-emerald-600">3</span>
+                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-blue-600">3</span>
                     </div>
                     <p className="text-sm text-gray-600">
                       Earn {estimatedAPY}% APY as developers pay service fees
                     </p>
                   </div>
                   <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-emerald-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <span className="text-xs font-bold text-emerald-600">4</span>
+                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <span className="text-xs font-bold text-blue-600">4</span>
                     </div>
                     <p className="text-sm text-gray-600">
                       Unstake anytime with a 7-day cooldown period
