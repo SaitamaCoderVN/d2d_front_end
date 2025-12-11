@@ -147,14 +147,32 @@ export const fetchBackerDataOnChain = async (
     }
 
     const stake = stakeResult.data;
+
+    // DEBUG: Log raw account data
+    console.log('[backerOnChain] Raw stake account data:', {
+      hasDepositedAmount: !!stake.depositedAmount,
+      hasPendingRewards: !!stake.pendingRewards,
+      hasRewardDebt: !!stake.rewardDebt,
+      hasClaimedTotal: !!stake.claimedTotal,
+      isActive: stake.isActive,
+      allKeys: Object.keys(stake),
+    });
+
     // Convert from lamports to SOL (LAMPORTS_PER_SOL already defined above)
     const userStakeLamports = stake.depositedAmount?.toNumber() || 0;
+    const pendingRewardsLamports = stake.pendingRewards?.toNumber() || 0; // NEW: pending rewards
     const totalClaimedLamports = stake.claimedTotal?.toNumber() || 0; // Fixed: use claimedTotal not totalClaimed
+
+    console.log('[backerOnChain] Extracted values:', {
+      userStakeLamports,
+      pendingRewardsLamports,
+      totalClaimedLamports,
+    });
     // rewardDebt is u128, must use toBigInt() to avoid precision loss
-    const rewardDebt = stake.rewardDebt ? 
-      (typeof stake.rewardDebt === 'bigint' ? stake.rewardDebt : 
-       stake.rewardDebt.toBigInt ? stake.rewardDebt.toBigInt() : 
-       BigInt(stake.rewardDebt.toString())) : 
+    const rewardDebt = stake.rewardDebt ?
+      (typeof stake.rewardDebt === 'bigint' ? stake.rewardDebt :
+       stake.rewardDebt.toBigInt ? stake.rewardDebt.toBigInt() :
+       BigInt(stake.rewardDebt.toString())) :
       BigInt(0);
     const isActive = stake.isActive || false;
     
@@ -175,14 +193,38 @@ export const fetchBackerDataOnChain = async (
     const daysStaked = 0;
 
     // Calculate user rewards using reward-per-share model
-    // Formula: (deposited_amount * reward_per_share - reward_debt) / PRECISION
+    // Formula: pending_rewards + (deposited_amount * reward_per_share - reward_debt) / PRECISION
     // Note: Calculation must use lamports and BigInt for precision
     const PRECISION = BigInt(1_000_000_000_000); // 1e12
     const userStakeBigInt = BigInt(userStakeLamports);
     const rewardDebtBigInt = rewardDebt; // Already BigInt
+
+    // Calculate accumulated rewards in BigInt to avoid overflow
     const accumulated = (userStakeBigInt * rewardPerShare) - rewardDebtBigInt;
-    const userRewardsLamports = accumulated > 0 ? Number(accumulated / PRECISION) : 0;
-    const userRewards = userRewardsLamports / LAMPORTS_PER_SOL; // Convert to SOL
+
+    // Convert to number safely: divide by PRECISION first, then convert to SOL
+    let rewardsFromRewardPerShare = 0;
+    if (accumulated > 0n) {
+      // userRewardsLamports is already in lamports after dividing by PRECISION
+      const rewardsFromRewardPerShareLamports = Number(accumulated / PRECISION);
+      // Convert lamports to SOL
+      rewardsFromRewardPerShare = rewardsFromRewardPerShareLamports / LAMPORTS_PER_SOL;
+    }
+
+    // Total rewards = pending_rewards + rewards from reward_per_share
+    const pendingRewardsSOL = pendingRewardsLamports / LAMPORTS_PER_SOL;
+    const userRewards = pendingRewardsSOL + rewardsFromRewardPerShare;
+
+    console.log('[backerOnChain] Reward calculation:', {
+      userStakeLamports,
+      pendingRewardsLamports,
+      rewardPerShare: rewardPerShare.toString(),
+      rewardDebt: rewardDebtBigInt.toString(),
+      accumulated: accumulated.toString(),
+      rewardsFromRewardPerShare: rewardsFromRewardPerShare.toFixed(9),
+      pendingRewards: pendingRewardsSOL.toFixed(9),
+      totalUserRewards: userRewards.toFixed(9),
+    });
 
     return {
       totalStaked,

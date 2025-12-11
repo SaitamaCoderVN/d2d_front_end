@@ -276,8 +276,9 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
       });
 
       if (!verifyResult.isValid) {
-        toast.error(verifyResult.error || 'Program not found on devnet', { id: toastId });
-        setError(verifyResult.error || 'Program not found on devnet');
+        const errorMsg = verifyResult.error || 'Program not found on devnet';
+        toast.error(errorMsg, { id: toastId, duration: 6000 });
+        setError(errorMsg);
         setPhase(DeploymentPhase.INPUT);
         return;
       }
@@ -288,8 +289,20 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
       handleCalculateCosts(toastId);
     } catch (error: any) {
       console.error('Verification error:', error);
-      const errorMessage = error.response?.data?.message || error.message || 'Failed to verify program';
-      toast.error(`Verification failed: ${errorMessage}`, { id: toastId });
+      
+      // Handle timeout specifically
+      let errorMessage = 'Failed to verify program';
+      if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+        errorMessage = 'Verification timeout: Unable to connect to devnet RPC. Please check your network connection and try again.';
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(`Verification failed: ${errorMessage}`, { id: toastId, duration: 8000 });
       setError(errorMessage);
       setPhase(DeploymentPhase.INPUT);
     }
@@ -302,11 +315,25 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
     const toastId = existingToastId || toast.loading('Calculating deployment costs...');
 
     try {
+      // Refresh pool state before calculating costs
+      const poolState = await poolApi.getPoolState();
+      setAvailableForDeploy(poolState.availableForDeploySOL);
+      
       const costs = await deploymentApi.calculateCost({
         programId: devnetProgramId.trim(),
       });
 
       setCostBreakdown(costs);
+      
+      // Check if pool has enough SOL for deployment (informational only, don't block)
+      const deploymentCostSOL = costs.rentCost / LAMPORTS_PER_SOL;
+      const availableSOL = poolState.availableForDeploySOL;
+      
+      if (availableSOL < deploymentCostSOL) {
+        // Don't show error, just inform user - they can still see the cost breakdown
+        console.log(`[INFO] Pool balance insufficient: Need ${deploymentCostSOL.toFixed(4)} SOL, available ${availableSOL.toFixed(4)} SOL`);
+      }
+      
       toast.success('💰 Cost calculated successfully!', { id: toastId });
       setPhase(DeploymentPhase.READY);
     } catch (error: any) {
@@ -732,7 +759,11 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
                     phase === DeploymentPhase.EXECUTING;
 
   const canStartVerification = phase === DeploymentPhase.INPUT && devnetProgramId.trim().length >= 32;
-  const canDeploy = phase === DeploymentPhase.READY && costBreakdown && publicKey;
+  
+  // Check if pool has enough SOL for deployment
+  const deploymentCostSOL = costBreakdown ? costBreakdown.rentCost / LAMPORTS_PER_SOL : 0;
+  const hasEnoughPoolBalance = availableForDeploy !== null && availableForDeploy >= deploymentCostSOL;
+  const canDeploy = phase === DeploymentPhase.READY && costBreakdown && publicKey && hasEnoughPoolBalance;
 
   return (
     <div className="w-full max-w-5xl mx-auto">
@@ -861,19 +892,77 @@ export default function DeploymentForm({ onDeploymentCreated }: DeploymentFormPr
             {/* Confirmation Area (Phase: READY) */}
             {phase === DeploymentPhase.READY && costBreakdown && (
                <div className="mt-4 mb-2 p-3 border border-blue-500/30 rounded bg-blue-900/10">
-                  <div className="text-blue-400 font-bold mb-2">CONFIRMATION_REQUIRED</div>
-                  <p className="text-slate-300 mb-1">Program Size: <span className="text-white">{(costBreakdown.programSize / 1024).toFixed(2)} KB</span></p>
-                  <p className="text-slate-300 mb-1">Total Cost: <span className="text-white">{costBreakdown.totalPaymentSOL.toFixed(4)} SOL</span></p>
+                  <div className="text-blue-400 font-bold mb-3">DEPLOYMENT_SUMMARY</div>
+                  <div className="space-y-1.5 mb-4">
+                    <p className="text-slate-300 text-sm">Program Size: <span className="text-white font-mono">{(costBreakdown.programSize / 1024).toFixed(2)} KB</span></p>
+                    <p className="text-slate-300 text-sm">Total Payment: <span className="text-white font-mono">{costBreakdown.totalPaymentSOL.toFixed(4)} SOL</span></p>
+                    <p className="text-slate-300 text-sm">Deployment Cost: <span className="text-white font-mono">{deploymentCostSOL.toFixed(4)} SOL</span></p>
+                    <div className="flex items-center gap-2 text-slate-300 text-sm">
+                      <span>Pool Liquidity:</span>
+                      {availableForDeploy !== null ? (
+                        <span className={hasEnoughPoolBalance ? "text-green-400 font-mono font-bold" : "text-yellow-400 font-mono font-bold"}>
+                          {availableForDeploy.toFixed(4)} SOL
+                        </span>
+                      ) : (
+                        <span className="text-slate-500 font-mono">Loading...</span>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {!hasEnoughPoolBalance && availableForDeploy !== null && (
+                    <div className="mt-3 p-3 bg-yellow-900/10 border border-yellow-500/30 rounded">
+                      <div className="flex items-start gap-2 mb-2">
+                        <svg className="w-5 h-5 text-yellow-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <div className="flex-1">
+                          <p className="text-yellow-400 text-sm font-bold mb-1">Insufficient Pool Liquidity</p>
+                          <p className="text-yellow-300 text-xs leading-relaxed">
+                            The treasury pool currently has <span className="font-mono font-bold">{availableForDeploy.toFixed(4)} SOL</span> available, 
+                            but this deployment requires <span className="font-mono font-bold">{deploymentCostSOL.toFixed(4)} SOL</span>.
+                            <br />
+                            <span className="text-yellow-400 font-semibold">Shortfall: {(deploymentCostSOL - availableForDeploy).toFixed(4)} SOL</span>
+                            <br />
+                            <br />
+                            Deployment will be available once more backers stake SOL into the pool. 
+                            You can check back later or share the platform to attract more liquidity providers.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {hasEnoughPoolBalance && (
+                    <div className="mt-3 p-2 bg-green-900/10 border border-green-500/30 rounded">
+                      <p className="text-green-400 text-xs flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Pool has sufficient liquidity for this deployment
+                      </p>
+                    </div>
+                  )}
+                  
                   <div className="flex items-center gap-4 mt-4">
-                     <button 
-                        onClick={handleDeployment}
-                        className="px-4 py-1 bg-blue-500 text-black font-bold hover:bg-blue-400"
-                     >
-                        [Y] CONFIRM
-                     </button>
+                     {hasEnoughPoolBalance ? (
+                       <button 
+                          onClick={handleDeployment}
+                          className="px-4 py-2 bg-blue-500 text-black font-bold hover:bg-blue-400 transition-colors"
+                       >
+                          [Y] CONFIRM DEPLOYMENT
+                       </button>
+                     ) : (
+                       <button 
+                          disabled
+                          className="px-4 py-2 bg-slate-700/50 text-slate-500 font-bold cursor-not-allowed opacity-60 border border-slate-600"
+                          title="Deployment unavailable due to insufficient pool liquidity"
+                       >
+                          [Y] DEPLOYMENT UNAVAILABLE
+                       </button>
+                     )}
                      <button 
                         onClick={resetForm}
-                        className="px-4 py-1 bg-transparent border border-slate-600 text-slate-400 hover:text-white"
+                        className="px-4 py-2 bg-transparent border border-slate-600 text-slate-400 hover:text-white hover:border-slate-500 transition-colors"
                      >
                         [N] CANCEL
                      </button>

@@ -27,13 +27,13 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning className="dark">
       <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans bg-[#0B0E14] text-slate-200 antialiased selection:bg-blue-500/30`} suppressHydrationWarning>
         <ThemeProvider>
-          <UserModeProvider>
-            <WalletProvider>
-              <ClientLayout>
-                {children}
-              </ClientLayout>
-            </WalletProvider>
-          </UserModeProvider>
+        <UserModeProvider>
+          <WalletProvider>
+            <ClientLayout>
+              {children}
+            </ClientLayout>
+          </WalletProvider>
+        </UserModeProvider>
         </ThemeProvider>
         <Toaster
           position="bottom-right"

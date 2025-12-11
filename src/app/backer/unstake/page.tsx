@@ -8,18 +8,42 @@ import { unstakeSolAnchor } from '@/lib/d2dProgramAnchor';
 import { fetchBackerDataOnChain, OnChainBackerData } from '@/lib/backerOnChain';
 import UnstakeHistory from '@/components/UnstakeHistory';
 
+interface MaxUnstakeInfo {
+  userStake: number; // lamports
+  maxUnstake: number; // lamports
+  poolLiquidBalance: number; // lamports - for deploy
+  poolWithdrawalBalance: number; // lamports - for unstake (1/4 of liquid_balance)
+  poolTotalDeposited: number; // lamports
+  poolUtilization: number; // percentage
+  canUnstake: boolean;
+  reason?: string;
+}
+
 export default function UnstakePage() {
   const wallet = useWallet();
   const { publicKey, connected } = wallet;
   const { connection } = useConnection();
-  
+
   const [unstakeAmount, setUnstakeAmount] = useState('');
   const [isUnstaking, setIsUnstaking] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [onChainData, setOnChainData] = useState<OnChainBackerData | null>(null);
-  
+  const [maxUnstakeInfo, setMaxUnstakeInfo] = useState<MaxUnstakeInfo | null>(null);
+
   const isFetchingRef = useRef(false);
   
+  const fetchMaxUnstakeInfo = useCallback(async () => {
+    if (!publicKey) return;
+
+    try {
+      const response = await fetch(`http://localhost:3001/api/pool/max-unstake/${publicKey.toString()}`);
+      const data = await response.json();
+      setMaxUnstakeInfo(data);
+    } catch (error) {
+      console.error('Error fetching max unstake info:', error);
+    }
+  }, [publicKey]);
+
   const refreshOnChainData = useCallback(async () => {
     if (!publicKey || !connected) {
       setIsLoading(false);
@@ -33,8 +57,12 @@ export default function UnstakePage() {
     try {
       isFetchingRef.current = true;
       setIsLoading(true);
-      
-      const data = await fetchBackerDataOnChain(connection, wallet);
+
+      // Fetch both on-chain data and max unstake info
+      const [data] = await Promise.all([
+        fetchBackerDataOnChain(connection, wallet),
+        fetchMaxUnstakeInfo(),
+      ]);
       setOnChainData(data);
     } catch (error) {
       console.error('Error fetching on-chain data:', error);
@@ -42,7 +70,7 @@ export default function UnstakePage() {
       setIsLoading(false);
       isFetchingRef.current = false;
     }
-  }, [publicKey, connected, connection, wallet]);
+  }, [publicKey, connected, connection, wallet, fetchMaxUnstakeInfo]);
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
@@ -76,12 +104,57 @@ export default function UnstakePage() {
       return;
     }
 
+    // Check withdrawal pool balance
+    if (maxUnstakeInfo) {
+      const amountLamports = Math.floor(amount * LAMPORTS_PER_SOL);
+      const maxUnstakeSOL = maxUnstakeInfo.maxUnstake / LAMPORTS_PER_SOL;
+      const withdrawalPoolSOL = maxUnstakeInfo.poolWithdrawalBalance / LAMPORTS_PER_SOL;
+
+      if (!maxUnstakeInfo.canUnstake) {
+        toast.error(
+          maxUnstakeInfo.reason || 'Cannot unstake at this time',
+          { duration: 5000 }
+        );
+        return;
+      }
+
+      if (amountLamports > maxUnstakeInfo.maxUnstake) {
+        toast.error(
+          `Can only unstake up to ${maxUnstakeSOL.toFixed(4)} SOL. Withdrawal pool balance: ${withdrawalPoolSOL.toFixed(4)} SOL`,
+          { duration: 6000 }
+        );
+        return;
+      }
+
+      // Warning if withdrawal pool is getting low (< 25% of liquid balance)
+      const liquidBalanceSOL = maxUnstakeInfo.poolLiquidBalance / LAMPORTS_PER_SOL;
+      const withdrawalRatio = liquidBalanceSOL > 0 ? (withdrawalPoolSOL / liquidBalanceSOL) * 100 : 0;
+      if (withdrawalRatio < 20) {
+        toast(
+          `⚠️ Withdrawal pool is low (${withdrawalRatio.toFixed(1)}% of deploy pool). More SOL may be needed for unstaking.`,
+          { icon: '⚠️', duration: 4000 }
+        );
+      }
+    }
+
     setIsUnstaking(true);
 
     try {
       toast.loading('Preparing unstake transaction...', { id: 'unstake' });
 
       const amountLamports = Math.floor(amount * LAMPORTS_PER_SOL);
+      
+      // Validate amount
+      if (!amountLamports || amountLamports <= 0 || isNaN(amountLamports)) {
+        toast.error('Invalid amount. Please enter a valid amount.', { id: 'unstake' });
+        return;
+      }
+
+      console.log('[Unstake] Amount validation:', {
+        amount,
+        amountLamports,
+        isValid: amountLamports > 0 && Number.isInteger(amountLamports),
+      });
 
       // Use Anchor client
       toast.loading('Please approve unstake transaction...', { id: 'unstake' });
@@ -119,10 +192,28 @@ export default function UnstakePage() {
       // Handle specific errors if possible
       if (error.message?.includes('User rejected')) {
         toast.error('Transaction cancelled', { id: 'unstake' });
-      } else if (error.message?.includes('StakeLocked') || error.message?.includes('0x177b')) { // 6011 = 0x177b
+      } else if (
+        error.message?.includes('AccountDidNotDeserialize') ||
+        error.message?.includes('InvalidAccountData') ||
+        error.code === 3003 ||
+        error.errorCode === 3003
+      ) {
+        toast.error(
+          'Treasury pool account needs migration. Please contact admin or try again after migration.',
+          { id: 'unstake', duration: 8000 }
+        );
+      } else if (error.message?.includes('InsufficientLiquidBalance') || error.message?.includes('Insufficient')) {
+        toast.error(
+          `Insufficient withdrawal pool balance. Available: ${maxUnstakeInfo ? (maxUnstakeInfo.maxUnstake / LAMPORTS_PER_SOL).toFixed(4) : '0'} SOL`,
+          { id: 'unstake', duration: 6000 }
+        );
+      } else if (error.message?.includes('StakeLocked') || error.message?.includes('0x177b')) {
         toast.error('Stake is still locked.', { id: 'unstake' });
+      } else if (error.message?.includes('InactiveStake')) {
+        toast.error('Your stake is inactive.', { id: 'unstake' });
       } else {
-        toast.error(`Error: ${error.message || 'Failed to unstake'}`, { id: 'unstake' });
+        const errorMsg = error.message || error.toString() || 'Failed to unstake';
+        toast.error(`Error: ${errorMsg}`, { id: 'unstake', duration: 6000 });
       }
     } finally {
       setIsUnstaking(false);
@@ -161,11 +252,24 @@ export default function UnstakePage() {
                     Unstake your SOL from the treasury pool.
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="text-right space-y-1">
+                  <div>
                   <div className="text-xs text-slate-500 font-mono mb-1">Staked Balance</div>
                   <div className="text-sm text-blue-400 font-mono font-bold">
                     {userStake.toFixed(4)} SOL
                   </div>
+                  </div>
+                  {maxUnstakeInfo && (
+                    <div>
+                      <div className="text-xs text-slate-500 font-mono mb-1">Available to Unstake</div>
+                      <div className="text-sm text-green-400 font-mono font-bold">
+                        {(maxUnstakeInfo.maxUnstake / LAMPORTS_PER_SOL).toFixed(4)} SOL
+                      </div>
+                      <div className="text-xs text-slate-600 font-mono mt-0.5">
+                        (Withdrawal Pool: {(maxUnstakeInfo.poolWithdrawalBalance / LAMPORTS_PER_SOL).toFixed(4)} SOL)
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -192,7 +296,12 @@ export default function UnstakePage() {
                       <button
                         type="button"
                         className="text-xs bg-slate-800 hover:bg-slate-700 text-blue-400 font-mono px-3 py-1.5 rounded border border-slate-700 transition-colors"
-                        onClick={() => setUnstakeAmount(userStake.toString())}
+                        onClick={() => {
+                          const maxAmount = maxUnstakeInfo 
+                            ? Math.min(userStake, maxUnstakeInfo.maxUnstake / LAMPORTS_PER_SOL)
+                            : userStake;
+                          setUnstakeAmount(maxAmount.toString());
+                        }}
                       >
                         MAX
                       </button>

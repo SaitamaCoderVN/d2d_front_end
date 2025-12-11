@@ -1,5 +1,5 @@
 {
-  "address": "FFFQCLoNLUqhiAbxYMiKXcN5LxAUSMN4fd2ijgtLnwxD",
+  "address": "BD1dTDXJuAa8dDP34Qq7TzsqBJ5XjnFsTJ9gypfXuNQQ",
   "metadata": {
     "name": "d2d_program_sol",
     "version": "0.1.0",
@@ -1088,6 +1088,16 @@
         },
         {
           "name": "admin",
+          "docs": [
+            "Admin signer to authorize the fee credit operation"
+          ],
+          "signer": true
+        },
+        {
+          "name": "fee_payer",
+          "docs": [
+            "SECURITY FIX: Developer/fee payer who pays the fees (not admin)"
+          ],
           "writable": true,
           "signer": true
         },
@@ -1312,6 +1322,41 @@
           "type": "bool"
         }
       ]
+    },
+    {
+      "name": "force_rebalance",
+      "docs": [
+        "Emergency force rebalance withdrawal pool (no admin check)",
+        "Temporary workaround when admin keypair is lost"
+      ],
+      "discriminator": [
+        66,
+        0,
+        138,
+        82,
+        54,
+        8,
+        74,
+        108
+      ],
+      "accounts": [
+        {
+          "name": "treasury_pool",
+          "writable": true
+        },
+        {
+          "name": "treasury_pda",
+          "writable": true
+        },
+        {
+          "name": "admin",
+          "docs": [
+            "Admin signer required for security"
+          ],
+          "signer": true
+        }
+      ],
+      "args": []
     },
     {
       "name": "fund_temporary_wallet",
@@ -1559,6 +1604,65 @@
           "type": "pubkey"
         }
       ]
+    },
+    {
+      "name": "migrate_treasury_pool",
+      "docs": [
+        "Migrate Treasury Pool to new layout (removed withdrawal_pool_balance)",
+        "Admin-only instruction to migrate existing pool to new struct layout",
+        "This preserves all existing data and removes withdrawal_pool_balance field"
+      ],
+      "discriminator": [
+        193,
+        75,
+        4,
+        104,
+        248,
+        187,
+        176,
+        73
+      ],
+      "accounts": [
+        {
+          "name": "treasury_pool",
+          "docs": [
+            "We use UncheckedAccount to avoid deserialization issues with old layout"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  116,
+                  114,
+                  101,
+                  97,
+                  115,
+                  117,
+                  114,
+                  121,
+                  95,
+                  112,
+                  111,
+                  111,
+                  108
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
     },
     {
       "name": "pay_subscription",
@@ -1953,55 +2057,19 @@
       "accounts": [
         {
           "name": "treasury_pool",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  116,
-                  114,
-                  101,
-                  97,
-                  115,
-                  117,
-                  114,
-                  121,
-                  95,
-                  112,
-                  111,
-                  111,
-                  108
-                ]
-              }
-            ]
-          }
+          "docs": [
+            "We use UncheckedAccount to handle old layout migration",
+            "Note: We can't use Account constraint because old layout can't deserialize",
+            "We verify the PDA manually in the function"
+          ],
+          "writable": true
         },
         {
           "name": "treasury_pda",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  116,
-                  114,
-                  101,
-                  97,
-                  115,
-                  117,
-                  114,
-                  121,
-                  95,
-                  112,
-                  111,
-                  111,
-                  108
-                ]
-              }
-            ]
-          }
+          "docs": [
+            "Same as treasury_pool, just for lamport transfers"
+          ],
+          "writable": true
         },
         {
           "name": "lender_stake",
@@ -2121,54 +2189,14 @@
       "accounts": [
         {
           "name": "treasury_pool",
-          "writable": true,
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  116,
-                  114,
-                  101,
-                  97,
-                  115,
-                  117,
-                  114,
-                  121,
-                  95,
-                  112,
-                  111,
-                  111,
-                  108
-                ]
-              }
-            ]
-          }
+          "docs": [
+            "We can't use seeds constraint because old accounts may have incorrect bump"
+          ],
+          "writable": true
         },
         {
           "name": "treasury_pda",
-          "pda": {
-            "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  116,
-                  114,
-                  101,
-                  97,
-                  115,
-                  117,
-                  114,
-                  121,
-                  95,
-                  112,
-                  111,
-                  111,
-                  108
-                ]
-              }
-            ]
-          }
+          "writable": true
         },
         {
           "name": "admin",
@@ -2196,6 +2224,11 @@
       "accounts": [
         {
           "name": "treasury_pool",
+          "docs": [
+            "We use UncheckedAccount to handle old layout migration",
+            "Note: We can't use Account constraint because old layout can't deserialize",
+            "We add seeds constraint so Anchor can resolve PDA, but don't deserialize"
+          ],
           "writable": true,
           "pda": {
             "seeds": [
@@ -2222,6 +2255,9 @@
         },
         {
           "name": "treasury_pda",
+          "docs": [
+            "Same as treasury_pool, just for lamport transfers"
+          ],
           "writable": true,
           "pda": {
             "seeds": [
@@ -2828,18 +2864,28 @@
     },
     {
       "code": 6027,
+      "name": "InvalidAccountData",
+      "msg": "Invalid account data - account needs migration. Please call migrate_treasury_pool() first"
+    },
+    {
+      "code": 6028,
       "name": "DivisionByZero",
       "msg": "Division by zero - total deposits is zero"
     },
     {
-      "code": 6028,
+      "code": 6029,
       "name": "InvalidWithdrawalRequest",
       "msg": "Invalid withdrawal request"
     },
     {
-      "code": 6029,
+      "code": 6030,
       "name": "InvalidAccountOwner",
       "msg": "Invalid account owner - account must be owned by this program"
+    },
+    {
+      "code": 6031,
+      "name": "PoolUtilizationTooHigh",
+      "msg": "Pool utilization would exceed 80% - cannot unstake this amount"
     }
   ],
   "types": [
@@ -2919,6 +2965,7 @@
         "Reward-per-share model:",
         "- deposited_amount: Amount of SOL deposited (net after fees)",
         "- reward_debt: Tracks accumulated rewards at deposit time (deposited_amount * reward_per_share)",
+        "- pending_rewards: Rewards that have been settled but not yet claimed (preserved during unstake/stake)",
         "- claimed_total: Total rewards claimed so far"
       ],
       "type": {
@@ -2935,6 +2982,10 @@
           {
             "name": "reward_debt",
             "type": "u128"
+          },
+          {
+            "name": "pending_rewards",
+            "type": "u64"
           },
           {
             "name": "claimed_total",

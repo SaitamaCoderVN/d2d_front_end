@@ -115,21 +115,75 @@ export const unstakeSolAnchor = async (
     throw new Error('Wallet not connected');
   }
 
+  // Validate amount
+  if (!amountLamports || amountLamports <= 0 || !Number.isInteger(amountLamports)) {
+    throw new Error(`Invalid amount: ${amountLamports}. Must be a positive integer in lamports.`);
+  }
+
   const provider = createProvider(connection, wallet);
   const program = getProgram(provider);
 
   const treasuryPoolPda = getTreasuryPoolPda();
   const lenderStakePda = getBackerDepositPda(wallet.publicKey);
 
+  const amountBN = new BN(amountLamports);
   console.log('[Anchor] Unstaking SOL:', {
     amount: amountLamports / 1e9,
+    amountLamports,
+    amountBN: amountBN.toString(),
     treasuryPool: treasuryPoolPda.toString(),
     lenderStake: lenderStakePda.toString(),
     lender: wallet.publicKey.toString(),
   });
 
+  try {
+    // Build transaction first for simulation
+    const transaction = await program.methods
+      .unstakeSol(amountBN)
+      .accountsPartial({
+        treasuryPool: treasuryPoolPda,
+        treasuryPda: treasuryPoolPda,
+        lenderStake: lenderStakePda,
+        lender: wallet.publicKey,
+        systemProgram: SystemProgram.programId,
+      })
+      .transaction();
+
+    // Set fee payer and recent blockhash for simulation
+    const { blockhash } = await connection.getLatestBlockhash();
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = wallet.publicKey;
+
+    // Simulate transaction first to get detailed error logs
+    console.log('[Anchor] Simulating unstake transaction...');
+    const simulation = await connection.simulateTransaction(transaction);
+    
+    if (simulation.value.err) {
+      console.error('[Anchor] Simulation failed:', simulation.value.err);
+      console.error('[Anchor] Simulation logs:', simulation.value.logs);
+      
+      // Try to extract error message from logs
+      const logs = simulation.value.logs || [];
+      const errorLog = logs.find((log: string) => 
+        log.includes('Error:') || 
+        log.includes('failed:') || 
+        log.includes('invalid') ||
+        log.includes('Invalid')
+      );
+      
+      if (errorLog) {
+        console.error('[Anchor] Error from logs:', errorLog);
+        throw new Error(`Transaction simulation failed: ${errorLog}`);
+      }
+      
+      throw new Error(`Transaction simulation failed: ${JSON.stringify(simulation.value.err)}`);
+    }
+    
+    console.log('[Anchor] Simulation successful, sending transaction...');
+    
+    // If simulation succeeds, send the transaction
   const tx = await program.methods
-    .unstakeSol(new BN(amountLamports))
+      .unstakeSol(amountBN)
     .accountsPartial({
       treasuryPool: treasuryPoolPda,
       treasuryPda: treasuryPoolPda,
@@ -141,6 +195,29 @@ export const unstakeSolAnchor = async (
 
   console.log('[Anchor] Unstake transaction:', tx);
   return tx;
+  } catch (error: any) {
+    console.error('[Anchor] Unstake error details:', {
+      error: error.message,
+      errorName: error.name,
+      errorCode: error.code,
+      transactionLogs: error.transactionLogs,
+      programErrorStack: error.programErrorStack,
+      amountLamports,
+      amountBN: amountBN.toString(),
+      treasuryPool: treasuryPoolPda.toString(),
+      lenderStake: lenderStakePda.toString(),
+    });
+    
+    // Log full error object for debugging
+    if (error.logs) {
+      console.error('[Anchor] Error logs:', error.logs);
+    }
+    if (error.programErrorStack) {
+      console.error('[Anchor] Program error stack:', error.programErrorStack);
+    }
+    
+    throw error;
+  }
 };
 
 /**

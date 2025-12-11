@@ -18,6 +18,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 35000, // 35 seconds timeout for all requests
 });
 
 export const configApi = {
@@ -86,6 +87,38 @@ export const deploymentApi = {
    */
   getAll: async (): Promise<Deployment[]> => {
     const response = await api.get<Deployment[]>('/api/deployments');
+    return response.data;
+  },
+
+  /**
+   * Get deployment logs by deployment ID
+   */
+  getLogs: async (id: string): Promise<Array<{
+    id?: string;
+    deployment_id: string;
+    phase: string;
+    log_level: string;
+    message: string;
+    metadata?: Record<string, any>;
+    created_at?: string;
+  }>> => {
+    const response = await api.get(`/api/deployments/${id}/logs`);
+    return response.data;
+  },
+
+  /**
+   * Get deployment with logs (optimized - single request)
+   */
+  getByIdWithLogs: async (id: string): Promise<Deployment & { logs?: Array<{
+    id?: string;
+    deployment_id: string;
+    phase: string;
+    log_level: string;
+    message: string;
+    metadata?: Record<string, any>;
+    created_at?: string;
+  }> }> => {
+    const response = await api.get(`/api/deployments/${id}/with-logs`);
     return response.data;
   },
 

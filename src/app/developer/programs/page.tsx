@@ -299,12 +299,16 @@ export default function ProgramsPage() {
                   {/* Right: Actions */}
                   <div className="flex items-center gap-2 flex-shrink-0">
                     {isActive && (
-                      <div className="w-8 h-8 bg-slate-800 rounded flex items-center justify-center border border-slate-700">
-                        <svg className="animate-spin h-4 w-4 text-blue-400" viewBox="0 0 24 24">
+                      <Link
+                        href={`/developer/deployment/${deployment._id || deployment.id}`}
+                        className="px-3 py-1.5 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 rounded-md text-xs font-mono transition-colors flex items-center gap-2"
+                      >
+                        <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
                           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                         </svg>
-                      </div>
+                        View Progress
+                      </Link>
                     )}
                     {programId && (
                       <a
@@ -322,8 +326,8 @@ export default function ProgramsPage() {
                     <button className="p-2 text-slate-500 hover:text-slate-300 opacity-0 group-hover:opacity-100 transition-opacity">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                      </svg>
-                    </button>
+                        </svg>
+                      </button>
                   </div>
                 </div>
               );
@@ -405,31 +409,36 @@ export default function ProgramsPage() {
 
                   {/* Actions */}
                   <div className="flex items-center justify-between pt-4 border-t border-slate-800">
-                    <div className="flex items-center gap-2">
-                      {isActive && (
-                        <div className="w-6 h-6 bg-slate-800 rounded flex items-center justify-center border border-slate-700">
-                          <svg className="animate-spin h-3 w-3 text-blue-400" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                          </svg>
-                        </div>
-                      )}
-                      {programId && (
-                        <a
-                          href={`https://explorer.solana.com/address/${programId}?cluster=devnet`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-1.5 text-slate-500 hover:text-blue-400 transition-colors"
-                          title="View on Explorer"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                        </a>
-                      )}
-                    </div>
-                    
-                    {deployment.status === DeploymentStatus.SUCCESS && (
+                    {isActive ? (
+                      <Link
+                        href={`/developer/deployment/${deployment._id || deployment.id}`}
+                        className="flex-1 px-3 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 text-blue-300 rounded-md text-xs font-mono transition-colors flex items-center justify-center gap-2"
+                      >
+                        <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        View Progress
+                      </Link>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        {programId && (
+                          <a
+                            href={`https://explorer.solana.com/address/${programId}?cluster=devnet`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1.5 text-slate-500 hover:text-blue-400 transition-colors"
+                            title="View on Explorer"
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
+                        )}
+                      </div>
+                    )}
+
+                    {deployment.status === DeploymentStatus.SUCCESS && !isActive && (
                       <button
                         onClick={() => handleCloseProgram(deployment.id || deployment._id || '')}
                         disabled={closingDeploymentId === (deployment.id || deployment._id)}

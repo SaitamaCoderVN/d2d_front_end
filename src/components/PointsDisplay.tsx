@@ -17,7 +17,7 @@ export default function PointsDisplay({ className = '' }: PointsDisplayProps) {
   const { publicKey } = useWallet();
   const [pointsInfo, setPointsInfo] = useState<PointsInfo | null>(null);
   const [displayPoints, setDisplayPoints] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const lastSyncTimeRef = useRef<number>(Date.now());
   const animationFrameRef = useRef<number | null>(null);
 
@@ -29,7 +29,6 @@ export default function PointsDisplay({ className = '' }: PointsDisplayProps) {
       return;
     }
 
-    setIsLoading(true);
     try {
       const data = await pointsApi.getPoints(publicKey.toString());
       setPointsInfo(data);
@@ -73,33 +72,39 @@ export default function PointsDisplay({ className = '' }: PointsDisplayProps) {
     };
   }, [pointsInfo]);
 
-  // Sync with backend every 30 seconds
+  // Sync with backend every 30 seconds (only if wallet is connected)
   useEffect(() => {
+    if (!publicKey) {
+      setPointsInfo(null);
+      setDisplayPoints(0);
+      setIsLoading(false);
+      return;
+    }
+    
+    setIsLoading(true);
     fetchPoints();
     const interval = setInterval(fetchPoints, 30000);
     return () => clearInterval(interval);
   }, [publicKey]);
 
-  if (!publicKey || isLoading) {
-    return null;
-  }
+  // Determine if user has active stake
+  const hasActiveStake = pointsInfo && pointsInfo.currentDepositSOL >= MIN_DEPOSIT_FOR_POINTS;
 
-  if (!pointsInfo || pointsInfo.currentDepositSOL < MIN_DEPOSIT_FOR_POINTS) {
-    return null;
-  }
+  // Calculate final display points: show 0 if no stake, otherwise show calculated points
+  const finalDisplayPoints = hasActiveStake ? displayPoints : 0;
 
   return (
     <div className={`flex items-center space-x-2 ${className}`}>
       <div className="flex items-center space-x-1.5 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-md shadow-sm group hover:border-blue-500/50 transition-colors">
         <svg
-          className="w-3 h-3 text-blue-500 animate-pulse"
+          className={`w-3 h-3 text-blue-500 ${hasActiveStake ? 'animate-pulse' : ''}`}
           fill="currentColor"
           viewBox="0 0 20 20"
         >
           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
         </svg>
         <span className="text-slate-300 font-mono text-xs tabular-nums group-hover:text-blue-400 transition-colors">
-          {displayPoints.toFixed(3)} XP
+          {finalDisplayPoints.toFixed(3)} XP
         </span>
       </div>
     </div>

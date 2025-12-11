@@ -142,7 +142,12 @@ export default function LeaderboardPage() {
           <div className="card p-6 bg-[#151b28] border-slate-800">
             <div className="text-xs font-mono text-slate-500 uppercase mb-2 tracking-wider">Total Rewards Distributed</div>
             <div className="text-3xl font-bold text-blue-400 font-mono">
-              {isLoading ? '...' : formatSOL(leaderboard.reduce((sum, entry) => sum + entry.claimableRewards + entry.claimedTotal, 0))} <span className="text-lg text-blue-500/50">SOL</span>
+              {isLoading ? '...' : formatSOL(
+                leaderboard.reduce((sum, entry) => {
+                  // claimableRewards and claimedTotal are already in lamports from backend
+                  return sum + entry.claimableRewards + entry.claimedTotal;
+                }, 0)
+              )} <span className="text-lg text-blue-500/50">SOL</span>
             </div>
             <div className="text-[10px] font-mono text-slate-600 mt-1">Lifetime Protocol Value</div>
           </div>
